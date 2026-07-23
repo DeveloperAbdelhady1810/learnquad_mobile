@@ -19,5 +19,14 @@ class TokenStore {
 }
 
 final tokenStoreProvider = Provider<TokenStore>((ref) {
-  return TokenStore(const FlutterSecureStorage());
+  return TokenStore(
+    const FlutterSecureStorage(
+      // Avoids Keychain items becoming briefly inaccessible on iOS around
+      // device lock/unlock and opts out of iCloud Keychain sync, which is a
+      // known source of read hangs/errors on first-ever install.
+      iOptions: IOSOptions(
+        accessibility: KeychainAccessibility.first_unlock_this_device,
+      ),
+    ),
+  );
 });

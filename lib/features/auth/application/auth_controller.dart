@@ -54,12 +54,22 @@ class AuthController extends Notifier<AuthState> {
   AuthRepository get _repository => ref.read(authRepositoryProvider);
 
   Future<void> _checkToken() async {
-    final token = await _tokenStore.readToken();
-    state = AuthState(
-      status: token != null
-          ? AuthStatus.authenticated
-          : AuthStatus.unauthenticated,
-    );
+    try {
+      // iOS Keychain reads (via flutter_secure_storage) can hang or throw on
+      // first install / after a re-signing change. Without this timeout and
+      // catch, any failure here leaves `status` stuck at `unknown` forever,
+      // and the router never routes past the splash screen.
+      final token = await _tokenStore.readToken().timeout(
+        const Duration(seconds: 5),
+      );
+      state = AuthState(
+        status: token != null
+            ? AuthStatus.authenticated
+            : AuthStatus.unauthenticated,
+      );
+    } catch (_) {
+      state = const AuthState(status: AuthStatus.unauthenticated);
+    }
   }
 
   Future<bool> login({required String email, required String password}) async {
