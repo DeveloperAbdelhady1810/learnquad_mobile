@@ -38,9 +38,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
 
       final isLoggedIn = status == AuthStatus.authenticated;
-      final onAuthGate =
-          path == '/login' || path == '/register' || path == '/splash';
 
+      // Splash is only ever a transient loading state, never a real
+      // destination — once status is resolved, always leave it.
+      if (path == '/splash') return isLoggedIn ? '/home' : '/login';
+
+      final onAuthGate = path == '/login' || path == '/register';
       if (!isLoggedIn && !onAuthGate) return '/login';
       if (isLoggedIn && onAuthGate) return '/home';
       return null;
