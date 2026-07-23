@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/webview/bridge_webview_screen.dart';
+import '../../learning/application/learning_providers.dart';
 import '../../purchase/data/webview_ticket_repository.dart';
 import '../application/course_providers.dart';
 import '../data/course_models.dart';
@@ -61,6 +63,7 @@ class _CourseDetailBodyState extends ConsumerState<_CourseDetailBody> {
       if (!mounted) return;
       if (success == true) {
         ref.invalidate(courseDetailProvider(widget.course.id));
+        ref.invalidate(myCoursesProvider);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Purchase successful! You are now enrolled.'),
@@ -87,6 +90,11 @@ class _CourseDetailBodyState extends ConsumerState<_CourseDetailBody> {
     final course = widget.course;
     final totalLectures =
         course.sections?.fold<int>(0, (sum, s) => sum + s.lectures.length) ?? 0;
+    final myCoursesAsync = ref.watch(myCoursesProvider);
+    final isEnrolled = myCoursesAsync.maybeWhen(
+      data: (courses) => courses.any((c) => c.id == course.id),
+      orElse: () => false,
+    );
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -136,19 +144,25 @@ class _CourseDetailBodyState extends ConsumerState<_CourseDetailBody> {
         const SizedBox(height: 8),
         ...?course.sections?.map((section) => _SectionTile(section: section)),
         const SizedBox(height: 24),
-        ElevatedButton(
-          onPressed: _isBuying ? null : _handleBuy,
-          child: _isBuying
-              ? const SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : Text('Buy — ${course.price.toStringAsFixed(0)} EGP'),
-        ),
+        if (isEnrolled)
+          ElevatedButton(
+            onPressed: () => context.push('/my-courses/${course.id}'),
+            child: const Text('Continue Learning'),
+          )
+        else
+          ElevatedButton(
+            onPressed: _isBuying ? null : _handleBuy,
+            child: _isBuying
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : Text('Buy — ${course.price.toStringAsFixed(0)} EGP'),
+          ),
       ],
     );
   }
