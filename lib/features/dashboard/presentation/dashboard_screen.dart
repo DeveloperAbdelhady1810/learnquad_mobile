@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/arabic_numerals.dart';
 import '../../auth/application/auth_controller.dart';
 import '../data/dashboard_repository.dart';
+import '../data/dashboard_stats.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -12,51 +14,33 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsync = ref.watch(dashboardStatsProvider);
     final userAsync = ref.watch(currentUserProvider);
+    final fg = Theme.of(context).textTheme.bodyMedium?.color;
 
     return RefreshIndicator(
       onRefresh: () => ref.refresh(dashboardStatsProvider.future),
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         children: [
           userAsync.when(
             data: (user) => Text(
-              'مرحباً، ${user.name}',
-              style: Theme.of(context).textTheme.titleLarge,
+              'أهلاً يا ${user.name} 👋',
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontSize: 21),
             ),
             loading: () => const SizedBox(height: 28),
-            error: (_, __) => const SizedBox.shrink(),
+            error: (_, _) => const SizedBox.shrink(),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
           statsAsync.when(
-            loading: () => const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
-            ),
-            error: (err, _) => Text('Failed to load stats: $err'),
-            data: (stats) => Row(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (err, _) => Text('تعذّر تحميل الإحصائيات: $err'),
+            data: (stats) => Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: _StatCard(
-                    label: 'Enrolled',
-                    value: '${stats.enrolled}',
-                    icon: Icons.menu_book,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _StatCard(
-                    label: 'Completed',
-                    value: '${stats.completed}',
-                    icon: Icons.check_circle,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _StatCard(
-                    label: 'Streak',
-                    value: '${stats.streak}',
-                    icon: Icons.local_fire_department,
-                  ),
-                ),
+                _StatGrid(stats: stats),
+                const SizedBox(height: 20),
+                _ProgressBar(stats: stats, fg: fg),
               ],
             ),
           ),
@@ -66,38 +50,92 @@ class DashboardScreen extends ConsumerWidget {
   }
 }
 
-class _StatCard extends StatelessWidget {
-  const _StatCard({
-    required this.label,
-    required this.value,
-    required this.icon,
-  });
-  final String label;
-  final String value;
-  final IconData icon;
+class _StatGrid extends StatelessWidget {
+  const _StatGrid({required this.stats});
+  final DashboardStats stats;
 
   @override
   Widget build(BuildContext context) {
+    final divider = Theme.of(context).dividerColor;
+    final cells = [
+      (Icons.local_fire_department, arDigits(stats.streak), 'أيام متتالية'),
+      (Icons.menu_book_outlined, arDigits(stats.enrolled), 'كورسات مسجّل بها'),
+      (Icons.check_circle_outline, arDigits(stats.completed), 'كورسات مكتملة'),
+    ];
+
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
-      decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(16),
+      decoration: BoxDecoration(border: Border.all(color: divider, width: 2)),
+      child: Row(
+        children: List.generate(cells.length, (i) {
+          final (icon, value, label) = cells[i];
+          return Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              decoration: BoxDecoration(
+                border: i < cells.length - 1
+                    ? Border(right: BorderSide(color: divider, width: 2))
+                    : null,
+              ),
+              child: Column(
+                children: [
+                  Icon(icon, size: 16, color: AppColors.accent),
+                  const SizedBox(height: 4),
+                  Text(value, style: AppTextStyles.brand(size: 18)),
+                  const SizedBox(height: 2),
+                  Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.color?.withValues(alpha: 0.55),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
       ),
-      child: Column(
-        children: [
-          Icon(icon, color: AppColors.primary, size: 28),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+    );
+  }
+}
+
+class _ProgressBar extends StatelessWidget {
+  const _ProgressBar({required this.stats, required this.fg});
+  final DashboardStats stats;
+  final Color? fg;
+
+  @override
+  Widget build(BuildContext context) {
+    final ratio = stats.enrolled == 0
+        ? 0.0
+        : (stats.completed / stats.enrolled).clamp(0, 1).toDouble();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('التقدم العام', style: TextStyle(fontSize: 12)),
+            Text(
+              '${arDigits((ratio * 100).round())}٪',
+              style: TextStyle(fontSize: 12, color: fg?.withValues(alpha: 0.6)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        SizedBox(
+          height: 8,
+          child: ClipRect(
+            child: LinearProgressIndicator(
+              value: ratio,
+              backgroundColor: AppColors.neutral300,
+            ),
           ),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 12, color: Colors.black54),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

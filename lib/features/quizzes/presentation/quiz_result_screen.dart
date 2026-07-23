@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/arabic_numerals.dart';
+import '../../../core/widgets/app_tag.dart';
 import '../application/quiz_providers.dart';
 import '../data/quiz_models.dart';
 
@@ -14,18 +16,21 @@ class QuizResultScreen extends ConsumerWidget {
     final resultAsync = ref.watch(quizResultProvider(quizId));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Result')),
+      appBar: AppBar(title: const Text('النتيجة')),
       body: resultAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
-        ),
-        error: (err, _) => Center(child: Text('Failed to load result: $err')),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, _) => Center(child: Text('تعذّر تحميل النتيجة: $err')),
         data: (result) => ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(20, 32, 20, 20),
           children: [
-            _ScoreCard(result: result),
-            const Divider(height: 32),
-            Text('Answers', style: Theme.of(context).textTheme.titleMedium),
+            Center(child: _ScoreBadge(result: result)),
+            const SizedBox(height: 22),
+            Text(
+              'الإجابات',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontSize: 15),
+            ),
             const SizedBox(height: 8),
             ...result.answers.map((a) => _AnswerTile(answer: a)),
           ],
@@ -35,49 +40,40 @@ class QuizResultScreen extends ConsumerWidget {
   }
 }
 
-class _ScoreCard extends StatelessWidget {
-  const _ScoreCard({required this.result});
+class _ScoreBadge extends StatelessWidget {
+  const _ScoreBadge({required this.result});
   final QuizResult result;
 
   @override
   Widget build(BuildContext context) {
-    final color = result.passed ? AppColors.primary : Colors.red.shade400;
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        children: [
-          Icon(
-            result.passed ? Icons.emoji_events : Icons.sentiment_dissatisfied,
-            size: 48,
-            color: color,
+    final fg = Theme.of(context).textTheme.bodyMedium?.color;
+    return Column(
+      children: [
+        Container(
+          width: 120,
+          height: 120,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            border: Border.all(color: AppColors.accent, width: 6),
           ),
-          const SizedBox(height: 12),
-          Text(
-            result.title,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleMedium,
+          child: Text(
+            '${arDigits(result.percentage.round())}٪',
+            style: AppTextStyles.brand(size: 32, color: fg),
           ),
-          const SizedBox(height: 8),
-          Text(
-            '${result.percentage.toStringAsFixed(1)}%',
-            style: TextStyle(
-              fontSize: 36,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-          Text('${result.score} / ${result.totalScore} points'),
-          const SizedBox(height: 8),
-          Text(
-            result.passed ? 'Passed' : 'Not passed (need ${result.passScore}%)',
-            style: TextStyle(fontWeight: FontWeight.w600, color: color),
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 16),
+        AppTag(
+          result.passed ? 'ناجح' : 'راسب',
+          variant: result.passed ? AppTagVariant.accent : AppTagVariant.outline,
+        ),
+        const SizedBox(height: 10),
+        Text(
+          '${arDigits(result.score)} من ${arDigits(result.totalScore)} إجابات صحيحة',
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontSize: 15),
+        ),
+      ],
     );
   }
 }
@@ -88,42 +84,43 @@ class _AnswerTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.only(bottom: 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.shade200),
+    final fg = Theme.of(context).textTheme.bodyMedium?.color;
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  answer.isCorrect ? Icons.check_circle : Icons.cancel,
-                  color: answer.isCorrect
-                      ? AppColors.primary
-                      : Colors.red.shade400,
-                  size: 20,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                answer.isCorrect ? Icons.check_circle : Icons.cancel_outlined,
+                color: answer.isCorrect ? AppColors.accent : fg?.withValues(alpha: 0.4),
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  answer.questionText,
+                  style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    answer.questionText,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ],
+              ),
+            ],
+          ),
+          if (!answer.isCorrect) ...[
+            const SizedBox(height: 4),
+            Padding(
+              padding: const EdgeInsets.only(right: 26),
+              child: Text(
+                'إجابتك: ${answer.yourAnswer ?? '(بدون إجابة)'}  ·  الصحيحة: ${answer.correctAnswer}',
+                style: TextStyle(fontSize: 11.5, color: fg?.withValues(alpha: 0.65)),
+              ),
             ),
-            const SizedBox(height: 6),
-            Text('Your answer: ${answer.yourAnswer ?? '(none)'}'),
-            if (!answer.isCorrect)
-              Text('Correct answer: ${answer.correctAnswer}'),
           ],
-        ),
+        ],
       ),
     );
   }

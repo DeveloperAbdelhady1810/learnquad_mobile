@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/arabic_numerals.dart';
 import '../../auth/application/auth_controller.dart';
 import '../data/teacher_stats_models.dart';
 import '../data/teacher_stats_repository.dart';
@@ -15,15 +16,20 @@ class TeacherDashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsync = ref.watch(teacherStatsProvider);
     final coursesAsync = ref.watch(teacherCoursesProvider);
+    final userAsync = ref.watch(currentUserProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Teacher Dashboard'),
+        title: userAsync.maybeWhen(
+          data: (u) => Text('أهلاً ${u.name}'),
+          orElse: () => const Text('لوحة المدرس'),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Log out',
-            onPressed: () => ref.read(authControllerProvider.notifier).logout(),
+            icon: const Icon(Icons.logout_outlined),
+            tooltip: 'تسجيل الخروج',
+            onPressed: () =>
+                ref.read(authControllerProvider.notifier).logout(),
           ),
         ],
       ),
@@ -33,137 +39,152 @@ class TeacherDashboardScreen extends ConsumerWidget {
           ref.invalidate(teacherCoursesProvider);
         },
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
           children: [
             statsAsync.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(color: AppColors.primary),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, _) => Text('تعذّر تحميل الإحصائيات: $err'),
+              data: (stats) => _StatGrid(stats: stats),
+            ),
+            const SizedBox(height: 22),
+            Text(
+              'التسجيل حسب الكورس',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontSize: 14),
+            ),
+            const SizedBox(height: 10),
+            coursesAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, _) => Text('تعذّر تحميل الكورسات: $err'),
+              data: (courses) {
+                if (courses.isEmpty) {
+                  return const Text('لا توجد كورسات بعد.');
+                }
+                final maxEnrollment = courses
+                    .map((c) => c.enrollmentCount)
+                    .fold<int>(0, (a, b) => a > b ? a : b);
+                return Column(
+                  children: courses
+                      .map(
+                        (c) => _CourseEnrollmentRow(
+                          course: c,
+                          ratio: maxEnrollment == 0
+                              ? 0.0
+                              : c.enrollmentCount / maxEnrollment,
+                        ),
+                      )
+                      .toList(),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StatGrid extends StatelessWidget {
+  const _StatGrid({required this.stats});
+  final TeacherStats stats;
+
+  @override
+  Widget build(BuildContext context) {
+    final divider = Theme.of(context).dividerColor;
+    final cells = [
+      (arDigits(stats.students), 'إجمالي الطلاب', false),
+      ('${arDigits(stats.revenue.toStringAsFixed(0))} ج', 'إجمالي الإيراد', true),
+      (arDigits(stats.courses), 'كورسات نشطة', false),
+    ];
+
+    return Container(
+      decoration: BoxDecoration(border: Border.all(color: divider, width: 2)),
+      child: Row(
+        children: List.generate(cells.length, (i) {
+          final (value, label, accent) = cells[i];
+          return Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 6),
+              decoration: BoxDecoration(
+                border: i < cells.length - 1
+                    ? Border(right: BorderSide(color: divider, width: 2))
+                    : null,
               ),
-              error: (err, _) => Text('Failed to load stats: $err'),
-              data: (stats) => Row(
+              child: Column(
                 children: [
-                  Expanded(
-                    child: _StatCard(
-                      label: 'Students',
-                      value: '${stats.students}',
-                      icon: Icons.people,
+                  Text(
+                    value,
+                    style: AppTextStyles.brand(
+                      size: 20,
+                      color: accent ? AppColors.accent : null,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _StatCard(
-                      label: 'Courses',
-                      value: '${stats.courses}',
-                      icon: Icons.menu_book,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _StatCard(
-                      label: 'Revenue',
-                      value: '${stats.revenue.toStringAsFixed(0)} EGP',
-                      icon: Icons.payments,
+                  const SizedBox(height: 4),
+                  Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      color: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.color?.withValues(alpha: 0.55),
                     ),
                   ),
                 ],
               ),
             ),
-            const Divider(height: 32),
-            Text(
-              'Your Courses',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            coursesAsync.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(color: AppColors.primary),
-              ),
-              error: (err, _) => Text('Failed to load courses: $err'),
-              data: (courses) => Column(
-                children: courses.map((c) => _CourseRow(course: c)).toList(),
-              ),
-            ),
-          ],
-        ),
+          );
+        }),
       ),
     );
   }
 }
 
-class _StatCard extends StatelessWidget {
-  const _StatCard({
-    required this.label,
-    required this.value,
-    required this.icon,
-  });
-  final String label;
-  final String value;
-  final IconData icon;
+class _CourseEnrollmentRow extends StatelessWidget {
+  const _CourseEnrollmentRow({required this.course, required this.ratio});
+  final TeacherCourseRow course;
+  final double ratio;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
-      decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(16),
-      ),
+    final fg = Theme.of(context).textTheme.bodyMedium?.color;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: AppColors.primary, size: 26),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  course.title,
+                  style: const TextStyle(fontSize: 12.5),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Text(
+                '${arDigits(course.enrollmentCount)} طالب',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: fg?.withValues(alpha: 0.6),
+                ),
+              ),
+            ],
           ),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 12, color: Colors.black54),
+          const SizedBox(height: 5),
+          SizedBox(
+            height: 8,
+            child: ClipRect(
+              child: LinearProgressIndicator(
+                value: ratio,
+                backgroundColor: AppColors.neutral300,
+              ),
+            ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _CourseRow extends StatelessWidget {
-  const _CourseRow({required this.course});
-  final TeacherCourseRow course;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.only(bottom: 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.shade200),
-      ),
-      child: ListTile(
-        title: Text(course.title),
-        subtitle: Text(
-          '${course.status} · ${course.price.toStringAsFixed(0)} EGP',
-        ),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              '${course.enrollmentCount}',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: AppColors.primary,
-              ),
-            ),
-            const Text(
-              'students',
-              style: TextStyle(fontSize: 11, color: Colors.black54),
-            ),
-          ],
-        ),
       ),
     );
   }

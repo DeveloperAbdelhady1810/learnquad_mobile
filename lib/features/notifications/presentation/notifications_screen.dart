@@ -12,10 +12,11 @@ class NotificationsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notificationsAsync = ref.watch(notificationListProvider);
+    final fg = Theme.of(context).textTheme.bodyMedium?.color;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notifications'),
+        title: const Text('الإشعارات'),
         actions: [
           TextButton(
             onPressed: () async {
@@ -23,54 +24,31 @@ class NotificationsScreen extends ConsumerWidget {
               ref.invalidate(notificationListProvider);
               ref.invalidate(unreadCountProvider);
             },
-            child: const Text('Mark all read'),
+            child: const Text('تعليم الكل كمقروء', style: TextStyle(fontSize: 12)),
           ),
         ],
       ),
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(notificationListProvider.future),
         child: notificationsAsync.when(
-          loading: () => const Center(
-            child: CircularProgressIndicator(color: AppColors.primary),
-          ),
-          error: (err, _) =>
-              Center(child: Text('Failed to load notifications: $err')),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (err, _) => Center(child: Text('تعذّر تحميل الإشعارات: $err')),
           data: (notifications) {
             if (notifications.isEmpty) {
               return ListView(
                 children: const [
                   SizedBox(height: 120),
-                  Center(child: Text('No notifications yet.')),
+                  Center(child: Text('لا توجد إشعارات بعد.')),
                 ],
               );
             }
             return ListView.separated(
               itemCount: notifications.length,
-              separatorBuilder: (_, __) => const Divider(height: 1),
+              separatorBuilder: (_, __) =>
+                  Divider(height: 1, color: Theme.of(context).dividerColor),
               itemBuilder: (context, index) {
                 final n = notifications[index];
-                return ListTile(
-                  tileColor: n.isUnread
-                      ? AppColors.primary.withValues(alpha: 0.05)
-                      : null,
-                  leading: Icon(
-                    n.isUnread ? Icons.circle : Icons.circle_outlined,
-                    size: 10,
-                    color: n.isUnread ? AppColors.primary : Colors.transparent,
-                  ),
-                  title: Text(
-                    n.title,
-                    style: TextStyle(
-                      fontWeight: n.isUnread
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                    ),
-                  ),
-                  subtitle: Text(n.body),
-                  trailing: Text(
-                    DateFormat('MMM d').format(n.createdAt),
-                    style: const TextStyle(fontSize: 11),
-                  ),
+                return InkWell(
                   onTap: () async {
                     if (n.isUnread) {
                       await ref
@@ -80,6 +58,66 @@ class NotificationsScreen extends ConsumerWidget {
                       ref.invalidate(unreadCountProvider);
                     }
                   },
+                  child: Container(
+                    color: n.isUnread
+                        ? AppColors.accent.withValues(alpha: 0.06)
+                        : null,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 14,
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: n.isUnread
+                                  ? AppColors.accent
+                                  : Colors.transparent,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                n.title,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: n.isUnread
+                                      ? FontWeight.w600
+                                      : FontWeight.normal,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                n.body,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: fg?.withValues(alpha: 0.65),
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                DateFormat('MMM d').format(n.createdAt),
+                                style: TextStyle(
+                                  fontSize: 10.5,
+                                  color: fg?.withValues(alpha: 0.5),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 );
               },
             );

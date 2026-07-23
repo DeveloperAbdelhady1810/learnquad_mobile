@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/arabic_numerals.dart';
 import '../application/teacher_providers.dart';
 import '../data/teacher_models.dart';
 
@@ -13,51 +14,81 @@ class TeacherDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final teacherAsync = ref.watch(teacherDetailProvider(teacherId));
+    final fg = Theme.of(context).textTheme.bodyMedium?.color;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Teacher')),
+      appBar: AppBar(title: const Text('ملف المدرس')),
       body: teacherAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
-        ),
-        error: (err, _) => Center(child: Text('Failed to load teacher: $err')),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, _) => Center(child: Text('تعذّر تحميل بيانات المدرس: $err')),
         data: (teacher) => ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
           children: [
-            CircleAvatar(
-              radius: 36,
-              backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-              child: Text(
-                teacher.name.isNotEmpty ? teacher.name[0] : '?',
-                style: const TextStyle(
-                  fontSize: 28,
-                  color: AppColors.primaryDark,
-                  fontWeight: FontWeight.bold,
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 32,
+                  backgroundColor: AppColors.neutral300,
+                  child: Text(
+                    teacher.name.isNotEmpty ? teacher.name[0] : '؟',
+                    style: AppTextStyles.brand(size: 24, color: fg),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        teacher.name,
+                        style: Theme.of(context).textTheme.titleLarge
+                            ?.copyWith(fontSize: 18),
+                      ),
+                      if (teacher.subjects.isNotEmpty ||
+                          teacher.educationStages.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          [
+                            ...teacher.subjects,
+                            ...teacher.educationStages,
+                          ].join(' · '),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: fg?.withValues(alpha: 0.65),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            if (teacher.bio != null) ...[
+              const SizedBox(height: 20),
+              Text(
+                teacher.bio!,
+                style: TextStyle(
+                  fontSize: 13.5,
+                  height: 1.8,
+                  color: fg?.withValues(alpha: 0.85),
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
+            ],
+            const SizedBox(height: 20),
             Text(
-              teacher.name,
-              style: Theme.of(context).textTheme.headlineSmall,
+              'كورساته',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontSize: 15),
             ),
-            if (teacher.subjects.isNotEmpty) ...[
-              const SizedBox(height: 4),
+            const SizedBox(height: 10),
+            if (teacher.courses.isEmpty)
               Text(
-                teacher.subjects.join(', '),
-                style: const TextStyle(color: Colors.black54),
-              ),
-            ],
-            if (teacher.bio != null) ...[
-              const Divider(height: 32),
-              Text('Bio', style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 8),
-              Text(teacher.bio!),
-            ],
-            const Divider(height: 32),
-            Text('Courses', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            ...teacher.courses.map((c) => _TeacherCourseTile(course: c)),
+                'لا توجد كورسات منشورة حالياً.',
+                style: TextStyle(color: fg?.withValues(alpha: 0.6)),
+              )
+            else
+              ...teacher.courses.map((c) => _TeacherCourseTile(course: c)),
           ],
         ),
       ),
@@ -65,27 +96,57 @@ class TeacherDetailScreen extends ConsumerWidget {
   }
 }
 
+const _swatches = [
+  Color(0xFF7C1405),
+  Color(0xFF8B2E1F),
+  Color(0xFF605D5D),
+  Color(0xFF444141),
+];
+
 class _TeacherCourseTile extends StatelessWidget {
   const _TeacherCourseTile({required this.course});
   final TeacherCourseSummary course;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.shade200),
-      ),
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        onTap: () => context.push('/courses/${course.id}'),
-        title: Text(course.title),
-        trailing: Text(
-          '${course.price.toStringAsFixed(0)} EGP',
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            color: AppColors.primary,
+    final color = _swatches[course.id % _swatches.length];
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: Theme.of(context).cardTheme.color,
+        child: InkWell(
+          onTap: () => context.push('/courses/${course.id}'),
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Row(
+              children: [
+                Container(width: 40, height: 40, color: color),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        course.title,
+                        style: const TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        '${arDigits(course.price.toStringAsFixed(0))} ج.م',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: Theme.of(
+                            context,
+                          ).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

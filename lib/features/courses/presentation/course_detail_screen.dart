@@ -3,11 +3,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/arabic_numerals.dart';
 import '../../../core/webview/bridge_webview_screen.dart';
+import '../../../core/widgets/app_tag.dart';
 import '../../learning/application/learning_providers.dart';
 import '../../purchase/data/webview_ticket_repository.dart';
 import '../application/course_providers.dart';
 import '../data/course_models.dart';
+
+const _swatches = [
+  Color(0xFF7C1405),
+  Color(0xFF8B2E1F),
+  Color(0xFF605D5D),
+  Color(0xFF444141),
+];
 
 class CourseDetailScreen extends ConsumerWidget {
   const CourseDetailScreen({super.key, required this.courseId});
@@ -18,12 +27,9 @@ class CourseDetailScreen extends ConsumerWidget {
     final courseAsync = ref.watch(courseDetailProvider(courseId));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Course')),
       body: courseAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
-        ),
-        error: (err, _) => Center(child: Text('Failed to load course: $err')),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, _) => Center(child: Text('تعذّر تحميل الكورس: $err')),
         data: (course) => _CourseDetailBody(course: course),
       ),
     );
@@ -53,7 +59,7 @@ class _CourseDetailBodyState extends ConsumerState<_CourseDetailBody> {
         MaterialPageRoute(
           builder: (_) => BridgeWebViewScreen(
             initialUrl: bridgeUrl,
-            title: 'Checkout',
+            title: 'الدفع',
             interceptUrlContains: '/payment/callback',
             interceptSuccess: (uri) => uri.queryParameters['success'] == 'true',
           ),
@@ -65,20 +71,18 @@ class _CourseDetailBodyState extends ConsumerState<_CourseDetailBody> {
         ref.invalidate(courseDetailProvider(widget.course.id));
         ref.invalidate(myCoursesProvider);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Purchase successful! You are now enrolled.'),
-          ),
+          const SnackBar(content: Text('تم الشراء بنجاح! أنت مسجّل الآن في الكورس.')),
         );
       } else if (success == false) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Payment was not completed.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('لم تكتمل عملية الدفع.')));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Could not start checkout: $e')));
+        ).showSnackBar(SnackBar(content: Text('تعذّر بدء الدفع: $e')));
       }
     } finally {
       if (mounted) setState(() => _isBuying = false);
@@ -95,74 +99,186 @@ class _CourseDetailBodyState extends ConsumerState<_CourseDetailBody> {
       data: (courses) => courses.any((c) => c.id == course.id),
       orElse: () => false,
     );
+    final heroColor = _swatches[course.id % _swatches.length];
+    final fg = Theme.of(context).textTheme.bodyMedium?.color;
+    final bg = Theme.of(context).scaffoldBackgroundColor;
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
+    return Column(
       children: [
-        Text(course.title, style: Theme.of(context).textTheme.headlineSmall),
-        const SizedBox(height: 8),
-        if (course.teacherName != null)
-          Row(
+        Expanded(
+          child: ListView(
+            padding: EdgeInsets.zero,
             children: [
-              const Icon(Icons.person_outline, size: 18, color: Colors.black54),
-              const SizedBox(width: 4),
-              Text(
-                course.teacherName!,
-                style: const TextStyle(color: Colors.black54),
+              Container(
+                height: 180,
+                color: heroColor,
+                padding: const EdgeInsets.all(16),
+                child: Stack(
+                  children: [
+                    Positioned(
+                      top: 0,
+                      right: 0,
+                      child: BackButton(color: bg),
+                    ),
+                    if (course.subject != null)
+                      Positioned(
+                        left: 0,
+                        bottom: 0,
+                        child: Container(
+                          color: bg,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          child: Text(
+                            course.subject!,
+                            style: TextStyle(fontSize: 11, color: heroColor),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      course.title,
+                      style: Theme.of(
+                        context,
+                      ).textTheme.headlineSmall?.copyWith(fontSize: 22),
+                    ),
+                    if (course.teacherName != null) ...[
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 13,
+                            backgroundColor: AppColors.neutral300,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            course.teacherName!,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: fg?.withValues(alpha: 0.85),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    const SizedBox(height: 14),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        if (course.grade != null)
+                          AppTag(course.grade!, variant: AppTagVariant.neutral),
+                        AppTag(
+                          '${arDigits(totalLectures)} محاضرة',
+                          variant: AppTagVariant.neutral,
+                        ),
+                      ],
+                    ),
+                    if (course.description != null) ...[
+                      const SizedBox(height: 18),
+                      Text(
+                        course.description!,
+                        style: TextStyle(
+                          fontSize: 14,
+                          height: 1.85,
+                          color: fg?.withValues(alpha: 0.8),
+                        ),
+                      ),
+                    ],
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 18),
+                      child: Divider(
+                        height: 2,
+                        thickness: 2,
+                        color: Theme.of(context).dividerColor,
+                      ),
+                    ),
+                    Text(
+                      'محتوى الكورس',
+                      style: Theme.of(
+                        context,
+                      ).textTheme.titleMedium?.copyWith(fontSize: 14),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${arDigits(course.sections?.length ?? 0)} وحدات · '
+                      '${arDigits(totalLectures)} محاضرة',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: fg?.withValues(alpha: 0.65),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ...?course.sections?.map(
+                      (section) => _SectionTile(section: section),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Text(
-              '${course.price.toStringAsFixed(0)} EGP',
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primary,
-              ),
-            ),
-            const Spacer(),
-            Text(
-              '$totalLectures lectures',
-              style: const TextStyle(color: Colors.black54),
-            ),
-          ],
         ),
-        const Divider(height: 32),
-        if (course.description != null) ...[
-          Text(
-            'About this course',
-            style: Theme.of(context).textTheme.titleMedium,
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            border: Border(
+              top: BorderSide(color: Theme.of(context).dividerColor, width: 2),
+            ),
           ),
-          const SizedBox(height: 8),
-          Text(course.description!),
-          const Divider(height: 32),
-        ],
-        Text('Content', style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 8),
-        ...?course.sections?.map((section) => _SectionTile(section: section)),
-        const SizedBox(height: 24),
-        if (isEnrolled)
-          ElevatedButton(
-            onPressed: () => context.push('/my-courses/${course.id}'),
-            child: const Text('Continue Learning'),
-          )
-        else
-          ElevatedButton(
-            onPressed: _isBuying ? null : _handleBuy,
-            child: _isBuying
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
+          child: SafeArea(
+            top: false,
+            child: isEnrolled
+                ? ElevatedButton(
+                    onPressed: () => context.push('/my-courses/${course.id}'),
+                    child: const Text('متابعة التعلّم'),
                   )
-                : Text('Buy — ${course.price.toStringAsFixed(0)} EGP'),
+                : Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'السعر',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: fg?.withValues(alpha: 0.55),
+                              ),
+                            ),
+                            Text(
+                              '${arDigits(course.price.toStringAsFixed(0))} ج.م',
+                              style: AppTextStyles.brand(size: 20),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _isBuying ? null : _handleBuy,
+                          child: _isBuying
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text('اشترِ الآن'),
+                        ),
+                      ),
+                    ],
+                  ),
           ),
+        ),
       ],
     );
   }
@@ -174,32 +290,32 @@ class _SectionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ExpansionTile(
-      title: Text(
-        section.title,
-        style: const TextStyle(fontWeight: FontWeight.w600),
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        title: Text(
+          section.title,
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5),
+        ),
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: const EdgeInsets.only(bottom: 8),
+        children: section.lectures.map((lecture) {
+          return ListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(
+              lecture.type == 'video'
+                  ? Icons.play_circle_outline
+                  : Icons.description_outlined,
+              color: AppColors.accent,
+            ),
+            title: Text(lecture.title, style: const TextStyle(fontSize: 13.5)),
+            trailing: lecture.isFree
+                ? const AppTag('مجاني', variant: AppTagVariant.accent)
+                : const Icon(Icons.lock_outline, size: 16),
+          );
+        }).toList(),
       ),
-      tilePadding: EdgeInsets.zero,
-      childrenPadding: const EdgeInsets.only(bottom: 8),
-      children: section.lectures.map((lecture) {
-        return ListTile(
-          dense: true,
-          contentPadding: const EdgeInsets.only(left: 16),
-          leading: Icon(
-            lecture.type == 'video'
-                ? Icons.play_circle_outline
-                : Icons.description_outlined,
-            color: AppColors.primary,
-          ),
-          title: Text(lecture.title),
-          trailing: lecture.isFree
-              ? const Text(
-                  'Free',
-                  style: TextStyle(color: AppColors.primary, fontSize: 12),
-                )
-              : const Icon(Icons.lock_outline, size: 16, color: Colors.black38),
-        );
-      }).toList(),
     );
   }
 }

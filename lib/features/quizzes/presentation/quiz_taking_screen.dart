@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/arabic_numerals.dart';
 import '../application/quiz_providers.dart';
 import '../data/quiz_models.dart';
 import '../data/quiz_repository.dart';
@@ -25,18 +26,18 @@ class _QuizTakingScreenState extends ConsumerState<QuizTakingScreen> {
       final proceed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Unanswered questions'),
+          title: const Text('أسئلة بدون إجابة'),
           content: Text(
-            'You have $unanswered unanswered question(s). Submit anyway?',
+            'لسه فاضل $unanswered سؤال بدون إجابة. عايز تسلّم برضه؟',
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
+              child: const Text('إلغاء'),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('Submit'),
+              child: const Text('تسليم'),
             ),
           ],
         ),
@@ -60,7 +61,7 @@ class _QuizTakingScreenState extends ConsumerState<QuizTakingScreen> {
         setState(() => _isSubmitting = false);
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Failed to submit: $e')));
+        ).showSnackBar(SnackBar(content: Text('فشل التسليم: $e')));
       }
     }
   }
@@ -70,11 +71,9 @@ class _QuizTakingScreenState extends ConsumerState<QuizTakingScreen> {
     final quizAsync = ref.watch(quizDetailProvider(widget.quizId));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Quiz')),
+      appBar: AppBar(title: const Text('الاختبار')),
       body: quizAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
-        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) {
           // A 409 means the quiz was already submitted — route to the result instead.
           return Center(
@@ -89,7 +88,7 @@ class _QuizTakingScreenState extends ConsumerState<QuizTakingScreen> {
                       builder: (_) => QuizResultScreen(quizId: widget.quizId),
                     ),
                   ),
-                  child: const Text('View result instead'),
+                  child: const Text('عرض النتيجة بدلاً من ذلك'),
                 ),
               ],
             ),
@@ -97,56 +96,78 @@ class _QuizTakingScreenState extends ConsumerState<QuizTakingScreen> {
         },
         data: (quiz) => Column(
           children: [
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: Theme.of(context).dividerColor,
+                    width: 2,
+                  ),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     quiz.title,
-                    style: Theme.of(context).textTheme.titleLarge,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleMedium?.copyWith(fontSize: 16),
                   ),
-                  if (quiz.description != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      quiz.description!,
-                      style: const TextStyle(color: Colors.black54),
-                    ),
-                  ],
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Text(
-                    'Pass mark: ${quiz.passScore}%'
-                    '${quiz.durationMinutes != null ? ' · ${quiz.durationMinutes} min' : ''}',
-                    style: const TextStyle(color: Colors.black45, fontSize: 12),
-                  ),
-                  const Divider(height: 32),
-                  ...quiz.questions.asMap().entries.map(
-                    (entry) => _QuestionCard(
-                      index: entry.key + 1,
-                      question: entry.value,
-                      selected: _answers[entry.value.id],
-                      onSelect: (option) =>
-                          setState(() => _answers[entry.value.id] = option),
+                    '${arDigits(_answers.length)} من ${arDigits(quiz.questions.length)} أسئلة مجابة',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
                     ),
                   ),
                 ],
               ),
             ),
-            Padding(
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(20),
+                children: quiz.questions.asMap().entries.map((entry) {
+                  return _QuestionCard(
+                    index: entry.key + 1,
+                    question: entry.value,
+                    selected: _answers[entry.value.id],
+                    onSelect: (option) =>
+                        setState(() => _answers[entry.value.id] = option),
+                  );
+                }).toList(),
+              ),
+            ),
+            Container(
               padding: const EdgeInsets.all(16),
-              child: ElevatedButton(
-                onPressed: _isSubmitting ? null : () => _submit(quiz),
-                child: _isSubmitting
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : Text(
-                        'Submit (${_answers.length}/${quiz.questions.length} answered)',
-                      ),
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(
+                    color: Theme.of(context).dividerColor,
+                    width: 2,
+                  ),
+                ),
+              ),
+              child: SafeArea(
+                top: false,
+                child: ElevatedButton(
+                  onPressed: _isSubmitting ? null : () => _submit(quiz),
+                  child: _isSubmitting
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('تسليم الإجابات'),
+                ),
               ),
             ),
           ],
@@ -171,68 +192,44 @@ class _QuestionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Colors.grey.shade200),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '$index. ${question.questionText}',
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 12),
-            ...question.options.entries.map((entry) {
-              final isSelected = selected == entry.key;
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: () => onSelect(entry.key),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isSelected
-                            ? AppColors.primary
-                            : Colors.grey.shade300,
-                        width: isSelected ? 2 : 1,
-                      ),
-                      color: isSelected
-                          ? AppColors.primary.withValues(alpha: 0.06)
-                          : null,
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          isSelected
-                              ? Icons.radio_button_checked
-                              : Icons.radio_button_unchecked,
-                          color: isSelected
-                              ? AppColors.primary
-                              : Colors.black38,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(child: Text(entry.value)),
-                      ],
-                    ),
+    final divider = Theme.of(context).dividerColor;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 22),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${arDigits(index)}. ${question.questionText}',
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5),
+          ),
+          const SizedBox(height: 10),
+          ...question.options.entries.map((entry) {
+            final isSelected = selected == entry.key;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: InkWell(
+                onTap: () => onSelect(entry.key),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
                   ),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: isSelected ? AppColors.accent : divider,
+                      width: isSelected ? 2 : 1,
+                    ),
+                    color: isSelected
+                        ? AppColors.accent.withValues(alpha: 0.08)
+                        : null,
+                  ),
+                  child: Text(entry.value, style: const TextStyle(fontSize: 13)),
                 ),
-              );
-            }),
-          ],
-        ),
+              ),
+            );
+          }),
+        ],
       ),
     );
   }

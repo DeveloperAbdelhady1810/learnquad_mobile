@@ -29,12 +29,13 @@ class _TeacherListScreenState extends ConsumerState<TeacherListScreen> {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
           child: TextField(
             controller: _searchController,
+            textAlign: TextAlign.right,
             decoration: const InputDecoration(
-              hintText: 'Search teachers...',
-              prefixIcon: Icon(Icons.search),
+              hintText: 'ابحث عن مدرس...',
+              prefixIcon: Icon(Icons.search, size: 18),
             ),
             onSubmitted: (value) =>
                 ref.read(teacherListProvider.notifier).search(value),
@@ -44,17 +45,15 @@ class _TeacherListScreenState extends ConsumerState<TeacherListScreen> {
           child: RefreshIndicator(
             onRefresh: () => ref.read(teacherListProvider.notifier).refresh(),
             child: state.isLoading && state.teachers.isEmpty
-                ? const Center(
-                    child: CircularProgressIndicator(color: AppColors.primary),
-                  )
+                ? const Center(child: CircularProgressIndicator())
                 : state.errorMessage != null && state.teachers.isEmpty
                 ? Center(child: Text(state.errorMessage!))
                 : state.teachers.isEmpty
-                ? const Center(child: Text('No teachers found.'))
+                ? const Center(child: Text('لا يوجد مدرسون حالياً.'))
                 : ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.all(16),
                     itemCount: state.teachers.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (context, index) =>
                         _TeacherTile(teacher: state.teachers[index]),
                   ),
@@ -71,34 +70,53 @@ class _TeacherTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Colors.grey.shade200),
-      ),
-      child: ListTile(
+    final fg = Theme.of(context).textTheme.bodyMedium?.color;
+    return Material(
+      color: Theme.of(context).cardTheme.color,
+      child: InkWell(
         onTap: () => context.push('/teachers/${teacher.id}'),
-        contentPadding: const EdgeInsets.all(12),
-        leading: CircleAvatar(
-          radius: 24,
-          backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-          child: Text(
-            teacher.name.isNotEmpty ? teacher.name[0] : '?',
-            style: const TextStyle(
-              color: AppColors.primaryDark,
-              fontWeight: FontWeight.bold,
-            ),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 26,
+                backgroundColor: AppColors.neutral300,
+                child: Text(
+                  teacher.name.isNotEmpty ? teacher.name[0] : '؟',
+                  style: AppTextStyles.brand(size: 16, color: fg),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      teacher.name,
+                      style: Theme.of(context).textTheme.titleMedium
+                          ?.copyWith(fontSize: 15),
+                    ),
+                    if (teacher.subjects.isNotEmpty || teacher.educationStages.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        [
+                          ...teacher.subjects,
+                          ...teacher.educationStages,
+                        ].join(' · '),
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: fg?.withValues(alpha: 0.75),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_left, color: fg?.withValues(alpha: 0.4)),
+            ],
           ),
         ),
-        title: Text(
-          teacher.name,
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
-        subtitle: teacher.subjects.isNotEmpty
-            ? Text(teacher.subjects.join(', '))
-            : null,
-        trailing: const Icon(Icons.chevron_right),
       ),
     );
   }

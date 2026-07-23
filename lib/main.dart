@@ -19,7 +19,9 @@ class LearnQuadApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'LearnQuad',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(isArabic: true),
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
+      themeMode: ThemeMode.system,
       routerConfig: router,
       locale: const Locale('ar'),
       supportedLocales: const [Locale('ar'), Locale('en')],

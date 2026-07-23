@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/arabic_numerals.dart';
+import '../../../core/widgets/app_tag.dart';
 import '../application/quiz_providers.dart';
 import '../data/quiz_models.dart';
 import 'quiz_result_screen.dart';
@@ -16,18 +17,16 @@ class QuizListScreen extends ConsumerWidget {
     final quizzesAsync = ref.watch(courseQuizzesProvider(courseId));
 
     return quizzesAsync.when(
-      loading: () => const Center(
-        child: CircularProgressIndicator(color: AppColors.primary),
-      ),
-      error: (err, _) => Center(child: Text('Failed to load quizzes: $err')),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (err, _) => Center(child: Text('تعذّر تحميل الاختبارات: $err')),
       data: (quizzes) {
         if (quizzes.isEmpty) {
-          return const Center(child: Text('No quizzes for this course yet.'));
+          return const Center(child: Text('لا توجد اختبارات لهذا الكورس بعد.'));
         }
         return ListView.separated(
           padding: const EdgeInsets.all(16),
           itemCount: quizzes.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          separatorBuilder: (_, __) => const SizedBox(height: 10),
           itemBuilder: (context, index) => _QuizCard(quiz: quizzes[index]),
         );
       },
@@ -41,34 +40,10 @@ class _QuizCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Colors.grey.shade200),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
-        leading: Icon(
-          quiz.submitted ? Icons.fact_check : Icons.quiz_outlined,
-          color: AppColors.primary,
-          size: 32,
-        ),
-        title: Text(
-          quiz.title,
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
-        subtitle: Text(
-          '${quiz.questionCount} questions'
-          '${quiz.durationMinutes != null ? ' · ${quiz.durationMinutes} min' : ''}'
-          ' · Pass: ${quiz.passScore}%',
-        ),
-        trailing: quiz.submitted
-            ? const Text(
-                'View result',
-                style: TextStyle(color: AppColors.primary, fontSize: 12),
-              )
-            : const Icon(Icons.chevron_right),
+    final fg = Theme.of(context).textTheme.bodyMedium?.color;
+    return Material(
+      color: Theme.of(context).cardTheme.color,
+      child: InkWell(
         onTap: () {
           Navigator.of(context).push(
             MaterialPageRoute(
@@ -78,6 +53,41 @@ class _QuizCard extends StatelessWidget {
             ),
           );
         },
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      quiz.title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14.5,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${arDigits(quiz.questionCount)} سؤال',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: fg?.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              AppTag(
+                quiz.submitted ? 'تم التسليم' : 'لم يبدأ',
+                variant: quiz.submitted
+                    ? AppTagVariant.accent
+                    : AppTagVariant.outline,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

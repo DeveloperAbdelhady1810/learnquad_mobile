@@ -3,8 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/arabic_numerals.dart';
 import '../application/learning_providers.dart';
 import '../data/my_course_models.dart';
+
+const _swatches = [
+  Color(0xFF7C1405),
+  Color(0xFF8B2E1F),
+  Color(0xFF605D5D),
+  Color(0xFF444141),
+];
 
 class MyCoursesScreen extends ConsumerWidget {
   const MyCoursesScreen({super.key});
@@ -16,17 +24,14 @@ class MyCoursesScreen extends ConsumerWidget {
     return RefreshIndicator(
       onRefresh: () => ref.refresh(myCoursesProvider.future),
       child: coursesAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
-        ),
-        error: (err, _) =>
-            Center(child: Text('Failed to load your courses: $err')),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, _) => Center(child: Text('تعذّر تحميل كورساتك: $err')),
         data: (courses) {
           if (courses.isEmpty) {
             return ListView(
               children: const [
                 SizedBox(height: 120),
-                Center(child: Text("You haven't enrolled in any courses yet.")),
+                Center(child: Text('لسه ماشتريتش أي كورس.')),
               ],
             );
           }
@@ -49,47 +54,72 @@ class _MyCourseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Colors.grey.shade200),
-      ),
+    final color = _swatches[course.id % _swatches.length];
+    final fg = Theme.of(context).textTheme.bodyMedium?.color;
+
+    return Material(
+      color: Theme.of(context).cardTheme.color,
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
         onTap: () => context.push('/my-courses/${course.id}'),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                course.title,
-                style: Theme.of(context).textTheme.titleMedium,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              Row(
+                children: [
+                  Container(width: 48, height: 48, color: color),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          course.title,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontSize: 15),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (course.teacherName != null) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            course.teacherName!,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: fg?.withValues(alpha: 0.75),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              if (course.teacherName != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  course.teacherName!,
-                  style: const TextStyle(color: Colors.black54),
-                ),
-              ],
-              const SizedBox(height: 12),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: LinearProgressIndicator(
-                  value: course.progress / 100,
-                  minHeight: 8,
-                  backgroundColor: Colors.grey.shade100,
-                  color: AppColors.primary,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '${course.progress}% complete',
-                style: const TextStyle(fontSize: 12, color: Colors.black54),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 6,
+                      child: ClipRect(
+                        child: LinearProgressIndicator(
+                          value: course.progress / 100,
+                          backgroundColor: AppColors.neutral300,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${arDigits(course.progress)}٪',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: fg,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/arabic_numerals.dart';
 import '../../../core/webview/bridge_webview_screen.dart';
 import '../../courses/data/course_models.dart';
 import '../../purchase/data/webview_ticket_repository.dart';
@@ -43,7 +44,7 @@ class CourseLecturesScreen extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Could not open lecture: $e')));
+        ).showSnackBar(SnackBar(content: Text('تعذّر فتح المحاضرة: $e')));
       }
     }
   }
@@ -56,34 +57,75 @@ class CourseLecturesScreen extends ConsumerWidget {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Course'),
+          title: const Text('الكورس'),
           bottom: const TabBar(
             tabs: [
-              Tab(text: 'Content', icon: Icon(Icons.menu_book_outlined)),
-              Tab(text: 'Quizzes', icon: Icon(Icons.quiz_outlined)),
+              Tab(text: 'المحتوى', icon: Icon(Icons.menu_book_outlined)),
+              Tab(text: 'الاختبارات', icon: Icon(Icons.quiz_outlined)),
             ],
           ),
         ),
         body: TabBarView(
           children: [
             sectionsAsync.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(color: AppColors.primary),
-              ),
+              loading: () => const Center(child: CircularProgressIndicator()),
               error: (err, _) =>
-                  Center(child: Text('Failed to load lectures: $err')),
-              data: (sections) => ListView(
-                padding: const EdgeInsets.all(16),
-                children: sections
-                    .map(
-                      (section) => _SectionCard(
-                        section: section,
-                        onTapLecture: (lecture) =>
-                            _watchLecture(context, ref, lecture),
+                  Center(child: Text('تعذّر تحميل المحاضرات: $err')),
+              data: (sections) {
+                final allLectures = sections.expand((s) => s.lectures).toList();
+                final completed = allLectures
+                    .where((l) => l.completed == true)
+                    .length;
+                final progress = allLectures.isEmpty
+                    ? 0.0
+                    : completed / allLectures.length;
+                final fg = Theme.of(context).textTheme.bodyMedium?.color;
+
+                return Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: SizedBox(
+                              height: 6,
+                              child: ClipRect(
+                                child: LinearProgressIndicator(
+                                  value: progress,
+                                  backgroundColor: AppColors.neutral300,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${arDigits((progress * 100).round())}٪',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: fg?.withValues(alpha: 0.65),
+                            ),
+                          ),
+                        ],
                       ),
-                    )
-                    .toList(),
-              ),
+                    ),
+                    Expanded(
+                      child: ListView(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                        children: sections
+                            .map(
+                              (section) => _SectionBlock(
+                                section: section,
+                                onTapLecture: (lecture) =>
+                                    _watchLecture(context, ref, lecture),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
             QuizListScreen(courseId: courseId),
           ],
@@ -93,40 +135,76 @@ class CourseLecturesScreen extends ConsumerWidget {
   }
 }
 
-class _SectionCard extends StatelessWidget {
-  const _SectionCard({required this.section, required this.onTapLecture});
+class _SectionBlock extends StatelessWidget {
+  const _SectionBlock({required this.section, required this.onTapLecture});
   final CourseSection section;
   final void Function(CourseLecture lecture) onTapLecture;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Colors.grey.shade200),
-      ),
-      child: ExpansionTile(
-        title: Text(
-          section.title,
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
-        initiallyExpanded: true,
-        children: section.lectures.map((lecture) {
-          final completed = lecture.completed == true;
-          return ListTile(
-            onTap: () => onTapLecture(lecture),
-            leading: Icon(
-              completed ? Icons.check_circle : Icons.play_circle_outline,
-              color: completed ? AppColors.primary : Colors.black45,
+    final fg = Theme.of(context).textTheme.bodyMedium?.color;
+    final divider = Theme.of(context).dividerColor;
+    return Padding(
+      padding: const EdgeInsets.only(top: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.only(bottom: 8),
+            margin: const EdgeInsets.only(bottom: 4),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: divider, width: 2)),
             ),
-            title: Text(lecture.title),
-            subtitle: !completed && (lecture.progressPercentage ?? 0) > 0
-                ? Text('${lecture.progressPercentage}% watched')
-                : null,
-          );
-        }).toList(),
+            child: Text(
+              section.title,
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 13.5,
+              ),
+            ),
+          ),
+          ...section.lectures.map((lecture) {
+            final completed = lecture.completed == true;
+            return InkWell(
+              onTap: () => onTapLecture(lecture),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  border: Border(bottom: BorderSide(color: divider)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      completed
+                          ? Icons.check_circle
+                          : Icons.play_circle_outline,
+                      size: 18,
+                      color: completed
+                          ? AppColors.accent
+                          : fg?.withValues(alpha: 0.55),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        lecture.title,
+                        style: const TextStyle(fontSize: 13.5),
+                      ),
+                    ),
+                    if (!completed && (lecture.progressPercentage ?? 0) > 0)
+                      Text(
+                        '${arDigits(lecture.progressPercentage ?? 0)}٪',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: fg?.withValues(alpha: 0.55),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ],
       ),
     );
   }
