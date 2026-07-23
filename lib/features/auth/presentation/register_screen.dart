@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/labeled_field.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../application/auth_controller.dart';
 import '../data/education_options.dart';
 
@@ -48,7 +48,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     if (!_formKey.currentState!.validate()) return;
     if (_stage == null || _grade == null || _gender == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('من فضلك أكمل كل الحقول.')),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.registerCompleteAllFields),
+        ),
       );
       return;
     }
@@ -71,9 +73,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authControllerProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('إنشاء حساب')),
+      appBar: AppBar(title: Text(l10n.registerTitle)),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -98,18 +101,18 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   const SizedBox(height: 16),
                 ],
                 LabeledField(
-                  label: 'الاسم بالكامل',
+                  label: l10n.fullNameLabel,
                   child: TextFormField(
                     controller: _nameController,
                     textAlign: TextAlign.right,
                     decoration: const InputDecoration(hintText: 'مريم أحمد سيد'),
                     validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'مطلوب' : null,
+                        (v == null || v.trim().isEmpty) ? l10n.requiredField : null,
                   ),
                 ),
                 const SizedBox(height: 14),
                 LabeledField(
-                  label: 'البريد الإلكتروني',
+                  label: l10n.emailLabel,
                   child: TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
@@ -118,27 +121,27 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       hintText: 'mariam.sayed@gmail.com',
                     ),
                     validator: (v) {
-                      if (v == null || v.trim().isEmpty) return 'مطلوب';
-                      if (!v.contains('@')) return 'أدخل بريدًا صحيحًا';
+                      if (v == null || v.trim().isEmpty) return l10n.requiredField;
+                      if (!v.contains('@')) return l10n.emailInvalid;
                       return null;
                     },
                   ),
                 ),
                 const SizedBox(height: 14),
                 LabeledField(
-                  label: 'رقم الموبايل',
+                  label: l10n.phoneLabel,
                   child: TextFormField(
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
                     textAlign: TextAlign.right,
                     decoration: const InputDecoration(hintText: '01012345678'),
                     validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'مطلوب' : null,
+                        (v == null || v.trim().isEmpty) ? l10n.requiredField : null,
                   ),
                 ),
                 const SizedBox(height: 14),
                 LabeledField(
-                  label: 'كلمة السر',
+                  label: l10n.passwordLabel,
                   child: TextFormField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
@@ -155,21 +158,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       ),
                     ),
                     validator: (v) {
-                      if (v == null || v.length < 8) return 'ثمانية أحرف على الأقل';
+                      if (v == null || v.length < 8) return l10n.minEightChars;
                       return null;
                     },
                   ),
                 ),
                 const SizedBox(height: 14),
                 LabeledField(
-                  label: 'تأكيد كلمة السر',
+                  label: l10n.confirmPasswordLabel,
                   child: TextFormField(
                     controller: _confirmPasswordController,
                     obscureText: _obscurePassword,
                     textAlign: TextAlign.right,
                     validator: (v) {
                       if (v != _passwordController.text) {
-                        return 'كلمتا السر غير متطابقتين';
+                        return l10n.passwordsDontMatch;
                       }
                       return null;
                     },
@@ -177,7 +180,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 const SizedBox(height: 20),
                 LabeledField(
-                  label: 'المرحلة الدراسية',
+                  label: l10n.educationStageLabel,
                   child: _StageSegment(
                     value: _stage,
                     onChanged: (value) => setState(() {
@@ -189,7 +192,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 if (_stage != null) ...[
                   const SizedBox(height: 14),
                   LabeledField(
-                    label: 'الصف الدراسي',
+                    label: l10n.gradeLabel,
                     child: DropdownButtonFormField<String>(
                       initialValue: _grade,
                       items: _gradesForStage
@@ -202,18 +205,18 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           )
                           .toList(),
                       onChanged: (value) => setState(() => _grade = value),
-                      validator: (v) => v == null ? 'مطلوب' : null,
+                      validator: (v) => v == null ? l10n.requiredField : null,
                     ),
                   ),
                 ],
                 const SizedBox(height: 14),
                 LabeledField(
-                  label: 'النوع',
+                  label: l10n.genderLabel,
                   child: Row(
                     children: [
                       Expanded(
                         child: _GenderRadio(
-                          label: 'ذكر',
+                          label: l10n.genderMale,
                           selected: _gender == 'male',
                           onTap: () => setState(() => _gender = 'male'),
                         ),
@@ -221,7 +224,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       const SizedBox(width: 20),
                       Expanded(
                         child: _GenderRadio(
-                          label: 'أنثى',
+                          label: l10n.genderFemale,
                           selected: _gender == 'female',
                           onTap: () => setState(() => _gender = 'female'),
                         ),
@@ -233,15 +236,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 SizedBox(
                   width: 120,
                   child: LabeledField(
-                    label: 'السن',
+                    label: l10n.ageLabel,
                     child: TextFormField(
                       controller: _ageController,
                       keyboardType: TextInputType.number,
                       textAlign: TextAlign.right,
                       validator: (v) {
                         final age = int.tryParse(v ?? '');
-                        if (age == null) return 'مطلوب';
-                        if (age < 10 || age > 25) return '١٠-٢٥';
+                        if (age == null) return l10n.requiredField;
+                        if (age < 10 || age > 25) return l10n.ageRange;
                         return null;
                       },
                     ),
@@ -259,12 +262,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             color: Colors.white,
                           ),
                         )
-                      : const Text('إنشاء الحساب'),
+                      : Text(l10n.createAccount),
                 ),
                 const SizedBox(height: 12),
                 TextButton(
                   onPressed: () => context.pop(),
-                  child: const Text('عندك حساب بالفعل؟ سجّل دخولك'),
+                  child: Text(l10n.alreadyHaveAccount),
                 ),
               ],
             ),
@@ -284,6 +287,7 @@ class _StageSegment extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final divider = Theme.of(context).dividerColor;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return Container(
       decoration: BoxDecoration(border: Border.all(color: divider)),
       child: Row(
@@ -291,13 +295,14 @@ class _StageSegment extends StatelessWidget {
           final index = entry.key;
           final stage = entry.value;
           final selected = value == stage.value;
-          final label = stage.label.split(' / ').first;
+          final parts = stage.label.split(' / ');
+          final label = isArabic ? parts.first : parts.last;
           return Expanded(
             child: InkWell(
               onTap: () => onChanged(stage.value),
               child: Container(
                 decoration: BoxDecoration(
-                  color: selected ? AppColors.accent : null,
+                  color: selected ? Theme.of(context).colorScheme.primary : null,
                   border: index == 0
                       ? Border(right: BorderSide(color: divider))
                       : null,
@@ -348,10 +353,12 @@ class _GenderRadio extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: selected ? AppColors.accent : divider,
+                color: selected ? Theme.of(context).colorScheme.primary : divider,
                 width: 1.5,
               ),
-              color: selected ? AppColors.accent : Colors.transparent,
+              color: selected
+                  ? Theme.of(context).colorScheme.primary
+                  : Colors.transparent,
             ),
             child: selected
                 ? Center(

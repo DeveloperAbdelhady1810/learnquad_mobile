@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/arabic_numerals.dart';
 import '../../../core/webview/bridge_webview_screen.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../../courses/data/course_models.dart';
 import '../../purchase/data/webview_ticket_repository.dart';
 import '../../quizzes/presentation/quiz_list_screen.dart';
@@ -42,9 +43,13 @@ class CourseLecturesScreen extends ConsumerWidget {
       ref.invalidate(myCoursesProvider);
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('تعذّر فتح المحاضرة: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.failedToOpenLecture(e.toString()),
+            ),
+          ),
+        );
       }
     }
   }
@@ -52,16 +57,17 @@ class CourseLecturesScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final sectionsAsync = ref.watch(courseLecturesProvider(courseId));
+    final l10n = AppLocalizations.of(context)!;
 
     return DefaultTabController(
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('الكورس'),
-          bottom: const TabBar(
+          title: Text(l10n.courseTitleFallback),
+          bottom: TabBar(
             tabs: [
-              Tab(text: 'المحتوى', icon: Icon(Icons.menu_book_outlined)),
-              Tab(text: 'الاختبارات', icon: Icon(Icons.quiz_outlined)),
+              Tab(text: l10n.tabContent, icon: const Icon(Icons.menu_book_outlined)),
+              Tab(text: l10n.tabQuizzes, icon: const Icon(Icons.quiz_outlined)),
             ],
           ),
         ),
@@ -69,8 +75,9 @@ class CourseLecturesScreen extends ConsumerWidget {
           children: [
             sectionsAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, _) =>
-                  Center(child: Text('تعذّر تحميل المحاضرات: $err')),
+              error: (err, _) => Center(
+                child: Text(l10n.failedToLoadLectures(err.toString())),
+              ),
               data: (sections) {
                 final allLectures = sections.expand((s) => s.lectures).toList();
                 final completed = allLectures
@@ -100,7 +107,7 @@ class CourseLecturesScreen extends ConsumerWidget {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            '${arDigits((progress * 100).round())}٪',
+                            '${localizedDigits(context, (progress * 100).round())}٪',
                             style: TextStyle(
                               fontSize: 11,
                               color: fg?.withValues(alpha: 0.65),
@@ -181,7 +188,7 @@ class _SectionBlock extends StatelessWidget {
                           : Icons.play_circle_outline,
                       size: 18,
                       color: completed
-                          ? AppColors.accent
+                          ? Theme.of(context).colorScheme.primary
                           : fg?.withValues(alpha: 0.55),
                     ),
                     const SizedBox(width: 10),
@@ -193,7 +200,7 @@ class _SectionBlock extends StatelessWidget {
                     ),
                     if (!completed && (lecture.progressPercentage ?? 0) > 0)
                       Text(
-                        '${arDigits(lecture.progressPercentage ?? 0)}٪',
+                        '${localizedDigits(context, lecture.progressPercentage ?? 0)}٪',
                         style: TextStyle(
                           fontSize: 11,
                           color: fg?.withValues(alpha: 0.55),

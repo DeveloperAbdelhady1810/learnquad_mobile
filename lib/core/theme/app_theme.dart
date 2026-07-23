@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Tokens ported from the "Modernist" design system (claude.ai/design project
-/// `LearnQuad design system` — see `LearnQuad Screens.dc.html`): a flat,
+/// Structural tokens ported from the "Modernist" design system (claude.ai/design
+/// project `LearnQuad design system` — see `LearnQuad Screens.dc.html`): a flat,
 /// sharp-cornered, editorial look — zero border radius everywhere, thick
-/// hairline dividers instead of soft shadows, one saturated accent color.
+/// hairline dividers instead of soft shadows.
+///
+/// The accent color itself is NOT fixed here — it's fetched from
+/// `GET /api/settings/theme` (see remote_theme.dart), which mirrors whatever
+/// color the admin has chosen on the website
+/// (`App\Helpers\Settings::activeThemeColors()`). The constants below are only
+/// the last-resort fallback used before that fetch resolves or if it fails.
 class AppColors {
   AppColors._();
 
@@ -18,12 +24,9 @@ class AppColors {
   static const surfaceDark = Color(0xFF3A3736);
   static const textDark = Color(0xFFF8F4F4);
 
-  // Shared accent — same in both modes
+  // Fallback accent — used only until the remote theme loads / if it fails.
   static const accent = Color(0xFFEC3013);
-  static const accent100 = Color(0xFFFFF2EF);
-  static const accent600 = Color(0xFFDD2B0F);
   static const accent700 = Color(0xFFAE1800);
-  static const accent800 = Color(0xFF7C1405);
 
   static const neutral100 = Color(0xFFF8F4F4);
   static const neutral200 = Color(0xFFEAE7E7);
@@ -31,10 +34,6 @@ class AppColors {
   static const neutral700 = Color(0xFF605D5D);
   static const neutral800 = Color(0xFF444141);
   static const neutral900 = Color(0xFF2D2B2B);
-
-  // Kept for the few call sites that haven't migrated to theme-driven colors.
-  static const primary = accent;
-  static const primaryDark = accent700;
 }
 
 class AppSpacing {
@@ -55,20 +54,22 @@ const kRadius = BorderRadius.zero;
 class AppTheme {
   AppTheme._();
 
-  static ThemeData light() => _build(Brightness.light);
-  static ThemeData dark() => _build(Brightness.dark);
+  static ThemeData light({Color accent = AppColors.accent}) =>
+      _build(Brightness.light, accent);
+  static ThemeData dark({Color accent = AppColors.accent}) =>
+      _build(Brightness.dark, accent);
 
-  static ThemeData _build(Brightness brightness) {
+  static ThemeData _build(Brightness brightness, Color accent) {
     final isDark = brightness == Brightness.dark;
     final bg = isDark ? AppColors.bgDark : AppColors.bg;
     final surface = isDark ? AppColors.surfaceDark : AppColors.surface;
     final fg = isDark ? AppColors.textDark : AppColors.text;
     final divider = fg.withValues(alpha: isDark ? 0.3 : 0.4);
 
-    // Arabic is the app's primary language (see main.dart's fixed locale) —
-    // IBM Plex Sans Arabic is the base text theme. Archivo (the Latin
-    // display face from the design system) is reserved for the brand
-    // wordmark and small uppercase kickers via AppTextStyles.brand below.
+    // Arabic is the app's primary language — IBM Plex Sans Arabic is the base
+    // text theme. Archivo (the Latin display face from the design system) is
+    // reserved for the brand wordmark and small uppercase kickers via
+    // AppTextStyles.brand below.
     var textTheme = GoogleFonts.ibmPlexSansArabicTextTheme(
       isDark ? ThemeData.dark().textTheme : ThemeData.light().textTheme,
     ).apply(bodyColor: fg, displayColor: fg);
@@ -91,9 +92,9 @@ class AppTheme {
     final colorScheme =
         (isDark ? const ColorScheme.dark() : const ColorScheme.light())
             .copyWith(
-              primary: AppColors.accent,
+              primary: accent,
               onPrimary: Colors.white,
-              secondary: AppColors.accent,
+              secondary: accent,
               surface: surface,
               onSurface: fg,
               error: const Color(0xFFD32F2F),
@@ -127,9 +128,9 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.accent,
+          backgroundColor: accent,
           foregroundColor: Colors.white,
-          disabledBackgroundColor: AppColors.accent.withValues(alpha: 0.45),
+          disabledBackgroundColor: accent.withValues(alpha: 0.45),
           textStyle: GoogleFonts.ibmPlexSansArabic(fontWeight: FontWeight.w700),
           padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
           shape: const RoundedRectangleBorder(borderRadius: kRadius),
@@ -147,7 +148,7 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: AppColors.accent,
+          foregroundColor: accent,
           textStyle: GoogleFonts.ibmPlexSansArabic(fontWeight: FontWeight.w700),
           shape: const RoundedRectangleBorder(borderRadius: kRadius),
         ),
@@ -167,15 +168,15 @@ class AppTheme {
           borderRadius: kRadius,
           borderSide: BorderSide(color: divider),
         ),
-        focusedBorder: const OutlineInputBorder(
+        focusedBorder: OutlineInputBorder(
           borderRadius: kRadius,
-          borderSide: BorderSide(color: AppColors.accent, width: 2),
+          borderSide: BorderSide(color: accent, width: 2),
         ),
         labelStyle: TextStyle(color: fg.withValues(alpha: 0.7)),
         hintStyle: TextStyle(color: fg.withValues(alpha: 0.45)),
       ),
-      progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: AppColors.accent,
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: accent,
         linearTrackColor: AppColors.neutral300,
       ),
       iconTheme: IconThemeData(color: fg),
@@ -184,9 +185,9 @@ class AppTheme {
         shape: const RoundedRectangleBorder(borderRadius: kRadius),
       ),
       tabBarTheme: TabBarThemeData(
-        labelColor: AppColors.accent,
+        labelColor: accent,
         unselectedLabelColor: fg.withValues(alpha: 0.5),
-        indicatorColor: AppColors.accent,
+        indicatorColor: accent,
         dividerColor: divider,
       ),
       snackBarTheme: SnackBarThemeData(
@@ -236,21 +237,25 @@ class AppSemantics extends ThemeExtension<AppSemantics> {
 /// The brand wordmark and small uppercase section kickers stay in Archivo
 /// (the design system's Latin display face) even on otherwise-Arabic
 /// screens — matches every mockup, where "LearnQuad" itself is never set in
-/// the Arabic font.
+/// the Arabic font. Colors default to the current theme's (dynamic) accent.
 class AppTextStyles {
   AppTextStyles._();
 
-  static TextStyle brand({double size = 15, Color? color}) =>
+  static TextStyle brand(
+    BuildContext context, {
+    double size = 15,
+    Color? color,
+  }) => GoogleFonts.archivo(
+    fontWeight: FontWeight.w800,
+    fontSize: size,
+    color: color ?? Theme.of(context).colorScheme.primary,
+  );
+
+  static TextStyle kicker(BuildContext context, {Color? color}) =>
       GoogleFonts.archivo(
         fontWeight: FontWeight.w800,
-        fontSize: size,
-        color: color ?? AppColors.accent,
+        fontSize: 11,
+        letterSpacing: 1.2,
+        color: color ?? Theme.of(context).colorScheme.primary,
       );
-
-  static TextStyle kicker({Color? color}) => GoogleFonts.archivo(
-    fontWeight: FontWeight.w800,
-    fontSize: 11,
-    letterSpacing: 1.2,
-    color: color ?? AppColors.accent,
-  );
 }

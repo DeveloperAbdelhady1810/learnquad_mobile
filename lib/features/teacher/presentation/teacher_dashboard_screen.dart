@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/arabic_numerals.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../../auth/application/auth_controller.dart';
+import '../../profile/presentation/profile_screen.dart';
 import '../data/teacher_stats_models.dart';
 import '../data/teacher_stats_repository.dart';
 
@@ -17,19 +19,21 @@ class TeacherDashboardScreen extends ConsumerWidget {
     final statsAsync = ref.watch(teacherStatsProvider);
     final coursesAsync = ref.watch(teacherCoursesProvider);
     final userAsync = ref.watch(currentUserProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
         title: userAsync.maybeWhen(
-          data: (u) => Text('أهلاً ${u.name}'),
-          orElse: () => const Text('لوحة المدرس'),
+          data: (u) => Text(l10n.teacherGreeting(u.name)),
+          orElse: () => Text(l10n.teacherDashboardTitle),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout_outlined),
-            tooltip: 'تسجيل الخروج',
-            onPressed: () =>
-                ref.read(authControllerProvider.notifier).logout(),
+            icon: const Icon(Icons.person_outline),
+            tooltip: l10n.profileTitle,
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ProfileScreen()),
+            ),
           ),
         ],
       ),
@@ -43,12 +47,12 @@ class TeacherDashboardScreen extends ConsumerWidget {
           children: [
             statsAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, _) => Text('تعذّر تحميل الإحصائيات: $err'),
+              error: (err, _) => Text(l10n.failedToLoadStats(err.toString())),
               data: (stats) => _StatGrid(stats: stats),
             ),
             const SizedBox(height: 22),
             Text(
-              'التسجيل حسب الكورس',
+              l10n.enrollmentByCourse,
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(fontSize: 14),
@@ -56,10 +60,10 @@ class TeacherDashboardScreen extends ConsumerWidget {
             const SizedBox(height: 10),
             coursesAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, _) => Text('تعذّر تحميل الكورسات: $err'),
+              error: (err, _) => Text(l10n.failedToLoadCourses(err.toString())),
               data: (courses) {
                 if (courses.isEmpty) {
-                  return const Text('لا توجد كورسات بعد.');
+                  return Text(l10n.noCoursesYetPlain);
                 }
                 final maxEnrollment = courses
                     .map((c) => c.enrollmentCount)
@@ -92,10 +96,15 @@ class _StatGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final divider = Theme.of(context).dividerColor;
+    final l10n = AppLocalizations.of(context)!;
     final cells = [
-      (arDigits(stats.students), 'إجمالي الطلاب', false),
-      ('${arDigits(stats.revenue.toStringAsFixed(0))} ج', 'إجمالي الإيراد', true),
-      (arDigits(stats.courses), 'كورسات نشطة', false),
+      (localizedDigits(context, stats.students), l10n.totalStudents, false),
+      (
+        '${localizedDigits(context, stats.revenue.toStringAsFixed(0))} ${l10n.currencySuffix}',
+        l10n.totalRevenue,
+        true,
+      ),
+      (localizedDigits(context, stats.courses), l10n.activeCourses, false),
     ];
 
     return Container(
@@ -116,8 +125,11 @@ class _StatGrid extends StatelessWidget {
                   Text(
                     value,
                     style: AppTextStyles.brand(
+                      context,
                       size: 20,
-                      color: accent ? AppColors.accent : null,
+                      color: accent
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).textTheme.bodyMedium?.color,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -166,7 +178,8 @@ class _CourseEnrollmentRow extends StatelessWidget {
                 ),
               ),
               Text(
-                '${arDigits(course.enrollmentCount)} طالب',
+                '${localizedDigits(context, course.enrollmentCount)} '
+                '${AppLocalizations.of(context)!.studentsSuffix}',
                 style: TextStyle(
                   fontSize: 12,
                   color: fg?.withValues(alpha: 0.6),

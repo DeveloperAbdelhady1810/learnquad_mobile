@@ -46,6 +46,7 @@ dependencies:
   google_fonts: ^8.1.0
   flutter_localizations:
     sdk: flutter
+  shared_preferences: ^2.5.3
 
 dev_dependencies:
   flutter_test:
@@ -90,6 +91,10 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  # Generates lib/l10n/gen/app_localizations.dart from lib/l10n/*.arb — see
+  # l10n.yaml for config.
+  generate: true
 
   # To add assets to your application, add an assets section, like this:
   # assets:

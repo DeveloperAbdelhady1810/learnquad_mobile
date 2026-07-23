@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_theme.dart';
-
 /// The recurring brand mark across splash/login/register: an accent-colored
 /// square with a rotated square cut out of its center. Matches every "logo"
 /// occurrence in the design mockups.
@@ -18,7 +16,7 @@ class LogoMark extends StatelessWidget {
       width: size,
       height: size,
       child: ColoredBox(
-        color: AppColors.accent,
+        color: Theme.of(context).colorScheme.primary,
         child: Center(
           child: Transform.rotate(
             angle: 0.785398, // 45deg

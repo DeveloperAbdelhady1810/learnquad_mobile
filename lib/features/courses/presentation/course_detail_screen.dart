@@ -6,6 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/arabic_numerals.dart';
 import '../../../core/webview/bridge_webview_screen.dart';
 import '../../../core/widgets/app_tag.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../../learning/application/learning_providers.dart';
 import '../../purchase/data/webview_ticket_repository.dart';
 import '../application/course_providers.dart';
@@ -25,11 +26,13 @@ class CourseDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final courseAsync = ref.watch(courseDetailProvider(courseId));
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       body: courseAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('تعذّر تحميل الكورس: $err')),
+        error: (err, _) =>
+            Center(child: Text(l10n.failedToLoadCourse(err.toString()))),
         data: (course) => _CourseDetailBody(course: course),
       ),
     );
@@ -48,6 +51,7 @@ class _CourseDetailBodyState extends ConsumerState<_CourseDetailBody> {
   bool _isBuying = false;
 
   Future<void> _handleBuy() async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() => _isBuying = true);
     try {
       final bridgeUrl = await ref
@@ -59,7 +63,7 @@ class _CourseDetailBodyState extends ConsumerState<_CourseDetailBody> {
         MaterialPageRoute(
           builder: (_) => BridgeWebViewScreen(
             initialUrl: bridgeUrl,
-            title: 'الدفع',
+            title: l10n.checkoutTitle,
             interceptUrlContains: '/payment/callback',
             interceptSuccess: (uri) => uri.queryParameters['success'] == 'true',
           ),
@@ -70,19 +74,19 @@ class _CourseDetailBodyState extends ConsumerState<_CourseDetailBody> {
       if (success == true) {
         ref.invalidate(courseDetailProvider(widget.course.id));
         ref.invalidate(myCoursesProvider);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تم الشراء بنجاح! أنت مسجّل الآن في الكورس.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.purchaseSuccess)));
       } else if (success == false) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('لم تكتمل عملية الدفع.')));
+        ).showSnackBar(SnackBar(content: Text(l10n.paymentNotCompleted)));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('تعذّر بدء الدفع: $e')));
+        ).showSnackBar(SnackBar(content: Text(l10n.checkoutFailed(e.toString()))));
       }
     } finally {
       if (mounted) setState(() => _isBuying = false);
@@ -92,6 +96,7 @@ class _CourseDetailBodyState extends ConsumerState<_CourseDetailBody> {
   @override
   Widget build(BuildContext context) {
     final course = widget.course;
+    final l10n = AppLocalizations.of(context)!;
     final totalLectures =
         course.sections?.fold<int>(0, (sum, s) => sum + s.lectures.length) ?? 0;
     final myCoursesAsync = ref.watch(myCoursesProvider);
@@ -177,7 +182,9 @@ class _CourseDetailBodyState extends ConsumerState<_CourseDetailBody> {
                         if (course.grade != null)
                           AppTag(course.grade!, variant: AppTagVariant.neutral),
                         AppTag(
-                          '${arDigits(totalLectures)} محاضرة',
+                          l10n.lecturesCount(
+                            localizedDigits(context, totalLectures),
+                          ),
                           variant: AppTagVariant.neutral,
                         ),
                       ],
@@ -202,15 +209,17 @@ class _CourseDetailBodyState extends ConsumerState<_CourseDetailBody> {
                       ),
                     ),
                     Text(
-                      'محتوى الكورس',
+                      l10n.courseContent,
                       style: Theme.of(
                         context,
                       ).textTheme.titleMedium?.copyWith(fontSize: 14),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '${arDigits(course.sections?.length ?? 0)} وحدات · '
-                      '${arDigits(totalLectures)} محاضرة',
+                      l10n.unitsAndLectures(
+                        localizedDigits(context, course.sections?.length ?? 0),
+                        localizedDigits(context, totalLectures),
+                      ),
                       style: TextStyle(
                         fontSize: 13,
                         color: fg?.withValues(alpha: 0.65),
@@ -238,7 +247,7 @@ class _CourseDetailBodyState extends ConsumerState<_CourseDetailBody> {
             child: isEnrolled
                 ? ElevatedButton(
                     onPressed: () => context.push('/my-courses/${course.id}'),
-                    child: const Text('متابعة التعلّم'),
+                    child: Text(l10n.continueLearning),
                   )
                 : Row(
                     children: [
@@ -247,15 +256,16 @@ class _CourseDetailBodyState extends ConsumerState<_CourseDetailBody> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'السعر',
+                              l10n.priceLabel,
                               style: TextStyle(
                                 fontSize: 11,
                                 color: fg?.withValues(alpha: 0.55),
                               ),
                             ),
                             Text(
-                              '${arDigits(course.price.toStringAsFixed(0))} ج.م',
-                              style: AppTextStyles.brand(size: 20),
+                              '${localizedDigits(context, course.price.toStringAsFixed(0))} '
+                              '${l10n.currencySuffix}',
+                              style: AppTextStyles.brand(context, size: 20),
                             ),
                           ],
                         ),
@@ -272,7 +282,7 @@ class _CourseDetailBodyState extends ConsumerState<_CourseDetailBody> {
                                     color: Colors.white,
                                   ),
                                 )
-                              : const Text('اشترِ الآن'),
+                              : Text(l10n.buyNow),
                         ),
                       ),
                     ],
@@ -307,11 +317,14 @@ class _SectionTile extends StatelessWidget {
               lecture.type == 'video'
                   ? Icons.play_circle_outline
                   : Icons.description_outlined,
-              color: AppColors.accent,
+              color: Theme.of(context).colorScheme.primary,
             ),
             title: Text(lecture.title, style: const TextStyle(fontSize: 13.5)),
             trailing: lecture.isFree
-                ? const AppTag('مجاني', variant: AppTagVariant.accent)
+                ? AppTag(
+                    AppLocalizations.of(context)!.freeTag,
+                    variant: AppTagVariant.accent,
+                  )
                 : const Icon(Icons.lock_outline, size: 16),
           );
         }).toList(),

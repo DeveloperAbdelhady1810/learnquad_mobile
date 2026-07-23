@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/arabic_numerals.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../application/teacher_providers.dart';
 import '../data/teacher_models.dart';
 
@@ -15,12 +16,14 @@ class TeacherDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final teacherAsync = ref.watch(teacherDetailProvider(teacherId));
     final fg = Theme.of(context).textTheme.bodyMedium?.color;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('ملف المدرس')),
+      appBar: AppBar(title: Text(l10n.teacherProfileTitle)),
       body: teacherAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('تعذّر تحميل بيانات المدرس: $err')),
+        error: (err, _) =>
+            Center(child: Text(l10n.failedToLoadTeacher(err.toString()))),
         data: (teacher) => ListView(
           padding: const EdgeInsets.all(20),
           children: [
@@ -31,7 +34,7 @@ class TeacherDetailScreen extends ConsumerWidget {
                   backgroundColor: AppColors.neutral300,
                   child: Text(
                     teacher.name.isNotEmpty ? teacher.name[0] : '؟',
-                    style: AppTextStyles.brand(size: 24, color: fg),
+                    style: AppTextStyles.brand(context, size: 24, color: fg),
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -76,7 +79,7 @@ class TeacherDetailScreen extends ConsumerWidget {
             ],
             const SizedBox(height: 20),
             Text(
-              'كورساته',
+              l10n.hisCourses,
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(fontSize: 15),
@@ -84,7 +87,7 @@ class TeacherDetailScreen extends ConsumerWidget {
             const SizedBox(height: 10),
             if (teacher.courses.isEmpty)
               Text(
-                'لا توجد كورسات منشورة حالياً.',
+                l10n.noPublishedCoursesYet,
                 style: TextStyle(color: fg?.withValues(alpha: 0.6)),
               )
             else
@@ -134,7 +137,8 @@ class _TeacherCourseTile extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '${arDigits(course.price.toStringAsFixed(0))} ج.م',
+                        '${localizedDigits(context, course.price.toStringAsFixed(0))} '
+                        '${AppLocalizations.of(context)!.currencySuffix}',
                         style: TextStyle(
                           fontSize: 11.5,
                           color: Theme.of(

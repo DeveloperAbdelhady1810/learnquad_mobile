@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/theme/app_theme.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../application/notification_providers.dart';
 import '../data/notification_repository.dart';
 
@@ -13,10 +13,12 @@ class NotificationsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notificationsAsync = ref.watch(notificationListProvider);
     final fg = Theme.of(context).textTheme.bodyMedium?.color;
+    final l10n = AppLocalizations.of(context)!;
+    final locale = Localizations.localeOf(context).toString();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('الإشعارات'),
+        title: Text(l10n.notifications),
         actions: [
           TextButton(
             onPressed: () async {
@@ -24,7 +26,7 @@ class NotificationsScreen extends ConsumerWidget {
               ref.invalidate(notificationListProvider);
               ref.invalidate(unreadCountProvider);
             },
-            child: const Text('تعليم الكل كمقروء', style: TextStyle(fontSize: 12)),
+            child: Text(l10n.markAllRead, style: const TextStyle(fontSize: 12)),
           ),
         ],
       ),
@@ -32,13 +34,14 @@ class NotificationsScreen extends ConsumerWidget {
         onRefresh: () => ref.refresh(notificationListProvider.future),
         child: notificationsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, _) => Center(child: Text('تعذّر تحميل الإشعارات: $err')),
+          error: (err, _) =>
+              Center(child: Text(l10n.failedToLoadNotifications(err.toString()))),
           data: (notifications) {
             if (notifications.isEmpty) {
               return ListView(
-                children: const [
-                  SizedBox(height: 120),
-                  Center(child: Text('لا توجد إشعارات بعد.')),
+                children: [
+                  const SizedBox(height: 120),
+                  Center(child: Text(l10n.noNotificationsYet)),
                 ],
               );
             }
@@ -60,7 +63,7 @@ class NotificationsScreen extends ConsumerWidget {
                   },
                   child: Container(
                     color: n.isUnread
-                        ? AppColors.accent.withValues(alpha: 0.06)
+                        ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.06)
                         : null,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
@@ -76,7 +79,7 @@ class NotificationsScreen extends ConsumerWidget {
                             height: 8,
                             decoration: BoxDecoration(
                               color: n.isUnread
-                                  ? AppColors.accent
+                                  ? Theme.of(context).colorScheme.primary
                                   : Colors.transparent,
                               shape: BoxShape.circle,
                             ),
@@ -106,7 +109,7 @@ class NotificationsScreen extends ConsumerWidget {
                               ),
                               const SizedBox(height: 3),
                               Text(
-                                DateFormat('MMM d').format(n.createdAt),
+                                DateFormat('MMM d', locale).format(n.createdAt),
                                 style: TextStyle(
                                   fontSize: 10.5,
                                   color: fg?.withValues(alpha: 0.5),

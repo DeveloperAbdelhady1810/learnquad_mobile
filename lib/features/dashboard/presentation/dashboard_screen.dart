@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/arabic_numerals.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../../auth/application/auth_controller.dart';
 import '../data/dashboard_repository.dart';
 import '../data/dashboard_stats.dart';
@@ -15,6 +16,7 @@ class DashboardScreen extends ConsumerWidget {
     final statsAsync = ref.watch(dashboardStatsProvider);
     final userAsync = ref.watch(currentUserProvider);
     final fg = Theme.of(context).textTheme.bodyMedium?.color;
+    final l10n = AppLocalizations.of(context)!;
 
     return RefreshIndicator(
       onRefresh: () => ref.refresh(dashboardStatsProvider.future),
@@ -23,7 +25,7 @@ class DashboardScreen extends ConsumerWidget {
         children: [
           userAsync.when(
             data: (user) => Text(
-              'أهلاً يا ${user.name} 👋',
+              l10n.dashboardGreeting(user.name),
               style: Theme.of(
                 context,
               ).textTheme.headlineSmall?.copyWith(fontSize: 21),
@@ -34,7 +36,7 @@ class DashboardScreen extends ConsumerWidget {
           const SizedBox(height: 18),
           statsAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, _) => Text('تعذّر تحميل الإحصائيات: $err'),
+            error: (err, _) => Text(l10n.failedToLoadStats(err.toString())),
             data: (stats) => Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -57,10 +59,23 @@ class _StatGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final divider = Theme.of(context).dividerColor;
+    final l10n = AppLocalizations.of(context)!;
     final cells = [
-      (Icons.local_fire_department, arDigits(stats.streak), 'أيام متتالية'),
-      (Icons.menu_book_outlined, arDigits(stats.enrolled), 'كورسات مسجّل بها'),
-      (Icons.check_circle_outline, arDigits(stats.completed), 'كورسات مكتملة'),
+      (
+        Icons.local_fire_department,
+        localizedDigits(context, stats.streak),
+        l10n.streakDays,
+      ),
+      (
+        Icons.menu_book_outlined,
+        localizedDigits(context, stats.enrolled),
+        l10n.enrolledCourses,
+      ),
+      (
+        Icons.check_circle_outline,
+        localizedDigits(context, stats.completed),
+        l10n.completedCourses,
+      ),
     ];
 
     return Container(
@@ -78,9 +93,9 @@ class _StatGrid extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  Icon(icon, size: 16, color: AppColors.accent),
+                  Icon(icon, size: 16, color: Theme.of(context).colorScheme.primary),
                   const SizedBox(height: 4),
-                  Text(value, style: AppTextStyles.brand(size: 18)),
+                  Text(value, style: AppTextStyles.brand(context, size: 18)),
                   const SizedBox(height: 2),
                   Text(
                     label,
@@ -118,9 +133,12 @@ class _ProgressBar extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('التقدم العام', style: TextStyle(fontSize: 12)),
             Text(
-              '${arDigits((ratio * 100).round())}٪',
+              AppLocalizations.of(context)!.overallProgress,
+              style: const TextStyle(fontSize: 12),
+            ),
+            Text(
+              '${localizedDigits(context, (ratio * 100).round())}٪',
               style: TextStyle(fontSize: 12, color: fg?.withValues(alpha: 0.6)),
             ),
           ],

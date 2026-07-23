@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../l10n/gen/app_localizations.dart';
 
 /// Shown only while [AuthController] is checking secure storage for a stored
 /// token. The router's redirect logic moves off this screen automatically
@@ -17,6 +18,8 @@ class SplashScreen extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final panelBg = isDark ? AppColors.textDark : AppColors.text;
     final content = isDark ? AppColors.bgDark : AppColors.bg;
+    final accent = Theme.of(context).colorScheme.primary;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: panelBg,
@@ -32,7 +35,7 @@ class SplashScreen extends StatelessWidget {
                       width: 64,
                       height: 64,
                       child: ColoredBox(
-                        color: AppColors.accent,
+                        color: accent,
                         child: Center(
                           child: Transform.rotate(
                             angle: 0.785398,
@@ -47,12 +50,16 @@ class SplashScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 18),
                     Text(
-                      'LearnQuad',
-                      style: AppTextStyles.brand(size: 26, color: content),
+                      l10n.appName,
+                      style: AppTextStyles.brand(
+                        context,
+                        size: 26,
+                        color: content,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'تعلّم. اختبر. تفوّق.',
+                      l10n.tagline,
                       style: TextStyle(
                         fontSize: 13,
                         color: content.withValues(alpha: 0.6),
@@ -70,7 +77,7 @@ class SplashScreen extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: null,
                     backgroundColor: content.withValues(alpha: 0.25),
-                    color: AppColors.accent,
+                    color: accent,
                   ),
                 ),
               ),

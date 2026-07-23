@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import '../theme/color_utils.dart';
 
 enum AppTagVariant { accent, outline, neutral }
 
@@ -18,6 +19,7 @@ class AppTag extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = Theme.of(context).colorScheme.primary;
 
     late final Color bg;
     late final Color fg;
@@ -25,12 +27,12 @@ class AppTag extends StatelessWidget {
 
     switch (variant) {
       case AppTagVariant.accent:
-        bg = AppColors.accent100;
-        fg = AppColors.accent800;
+        bg = tintColor(accent, 0.92);
+        fg = shadeColor(accent, 0.5);
       case AppTagVariant.outline:
         bg = Colors.transparent;
-        fg = AppColors.accent;
-        border = Border.all(color: AppColors.accent);
+        fg = accent;
+        border = Border.all(color: accent);
       case AppTagVariant.neutral:
         bg = isDark ? AppColors.neutral800 : AppColors.neutral100;
         fg = isDark ? AppColors.neutral100 : AppColors.neutral800;

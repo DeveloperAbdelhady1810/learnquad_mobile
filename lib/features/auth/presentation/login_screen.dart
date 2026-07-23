@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/widgets/labeled_field.dart';
 import '../../../core/widgets/logo_mark.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../application/auth_controller.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -41,6 +42,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authControllerProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       body: SafeArea(
@@ -56,12 +58,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   const LogoMark(size: 40),
                   const SizedBox(height: 18),
                   Text(
-                    'أهلاً بيك تاني',
+                    l10n.loginWelcomeBack,
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'سجّل دخولك عشان تكمل من مكانك',
+                    l10n.loginSubtitle,
                     style: TextStyle(
                       color: Theme.of(
                         context,
@@ -87,7 +89,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     const SizedBox(height: 16),
                   ],
                   LabeledField(
-                    label: 'البريد الإلكتروني',
+                    label: l10n.emailLabel,
                     child: TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
@@ -98,16 +100,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'البريد الإلكتروني مطلوب';
+                          return l10n.emailRequired;
                         }
-                        if (!value.contains('@')) return 'أدخل بريدًا صحيحًا';
+                        if (!value.contains('@')) return l10n.emailInvalid;
                         return null;
                       },
                     ),
                   ),
                   const SizedBox(height: 16),
                   LabeledField(
-                    label: 'كلمة السر',
+                    label: l10n.passwordLabel,
                     child: TextFormField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
@@ -127,7 +129,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'كلمة السر مطلوبة';
+                          return l10n.passwordRequired;
                         }
                         return null;
                       },
@@ -140,12 +142,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     child: TextButton(
                       onPressed: () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'إعادة تعيين كلمة السر متاحة حالياً من موقع '
-                              'learnquad.com فقط.',
-                            ),
-                          ),
+                          SnackBar(content: Text(l10n.forgotPasswordMessage)),
                         );
                       },
                       style: TextButton.styleFrom(
@@ -153,9 +150,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      child: const Text(
-                        'نسيت كلمة السر؟',
-                        style: TextStyle(fontSize: 12.5),
+                      child: Text(
+                        l10n.forgotPassword,
+                        style: const TextStyle(fontSize: 12.5),
                       ),
                     ),
                   ),
@@ -171,20 +168,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               color: Colors.white,
                             ),
                           )
-                        : const Text('دخول'),
+                        : Text(l10n.signIn),
                   ),
                   const SizedBox(height: 18),
                   Row(
                     children: [
                       Expanded(
-                        child: Divider(
-                          color: Theme.of(context).dividerColor,
-                        ),
+                        child: Divider(color: Theme.of(context).dividerColor),
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 10),
                         child: Text(
-                          'أو',
+                          l10n.or,
                           style: TextStyle(
                             fontSize: 11,
                             color: Theme.of(
@@ -196,16 +191,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ),
                       Expanded(
-                        child: Divider(
-                          color: Theme.of(context).dividerColor,
-                        ),
+                        child: Divider(color: Theme.of(context).dividerColor),
                       ),
                     ],
                   ),
                   const SizedBox(height: 18),
                   OutlinedButton(
                     onPressed: () => context.push('/register'),
-                    child: const Text('إنشاء حساب طالب جديد'),
+                    child: Text(l10n.createStudentAccount),
                   ),
                 ],
               ),

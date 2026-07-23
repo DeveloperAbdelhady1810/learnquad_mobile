@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/utils/arabic_numerals.dart';
 import '../../../core/widgets/app_tag.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../application/quiz_providers.dart';
 import '../data/quiz_models.dart';
 import 'quiz_result_screen.dart';
@@ -15,13 +16,15 @@ class QuizListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final quizzesAsync = ref.watch(courseQuizzesProvider(courseId));
+    final l10n = AppLocalizations.of(context)!;
 
     return quizzesAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, _) => Center(child: Text('تعذّر تحميل الاختبارات: $err')),
+      error: (err, _) =>
+          Center(child: Text(l10n.failedToLoadQuizzes(err.toString()))),
       data: (quizzes) {
         if (quizzes.isEmpty) {
-          return const Center(child: Text('لا توجد اختبارات لهذا الكورس بعد.'));
+          return Center(child: Text(l10n.noQuizzesYet));
         }
         return ListView.separated(
           padding: const EdgeInsets.all(16),
@@ -70,7 +73,9 @@ class _QuizCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${arDigits(quiz.questionCount)} سؤال',
+                      AppLocalizations.of(
+                        context,
+                      )!.questionsCount(localizedDigits(context, quiz.questionCount)),
                       style: TextStyle(
                         fontSize: 12,
                         color: fg?.withValues(alpha: 0.7),
@@ -80,7 +85,9 @@ class _QuizCard extends StatelessWidget {
                 ),
               ),
               AppTag(
-                quiz.submitted ? 'تم التسليم' : 'لم يبدأ',
+                quiz.submitted
+                    ? AppLocalizations.of(context)!.quizSubmitted
+                    : AppLocalizations.of(context)!.quizNotStarted,
                 variant: quiz.submitted
                     ? AppTagVariant.accent
                     : AppTagVariant.outline,

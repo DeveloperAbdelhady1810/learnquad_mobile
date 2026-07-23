@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/arabic_numerals.dart';
 import '../../../core/widgets/app_tag.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../application/course_providers.dart';
 import '../data/course_models.dart';
 
@@ -51,7 +52,7 @@ class _CourseListScreenState extends ConsumerState<CourseListScreen> {
             controller: _searchController,
             textAlign: TextAlign.right,
             decoration: InputDecoration(
-              hintText: 'ابحث عن مادة أو مدرس...',
+              hintText: AppLocalizations.of(context)!.searchCoursesHint,
               prefixIcon: const Icon(Icons.search, size: 18),
               suffixIcon: _searchController.text.isNotEmpty
                   ? IconButton(
@@ -85,7 +86,7 @@ class _CourseListScreenState extends ConsumerState<CourseListScreen> {
       return Center(child: Text(state.errorMessage!));
     }
     if (state.courses.isEmpty) {
-      return const Center(child: Text('لا توجد كورسات حالياً.'));
+      return Center(child: Text(AppLocalizations.of(context)!.noCoursesYet));
     }
 
     return ListView.separated(
@@ -140,6 +141,7 @@ class _CourseCard extends StatelessWidget {
                 child: Text(
                   initial,
                   style: AppTextStyles.brand(
+                    context,
                     size: 20,
                     color: Theme.of(context).scaffoldBackgroundColor,
                   ),
@@ -176,8 +178,9 @@ class _CourseCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                '${arDigits(course.price.toStringAsFixed(0))} ج.م',
-                style: AppTextStyles.brand(size: 14),
+                '${localizedDigits(context, course.price.toStringAsFixed(0))} '
+                '${AppLocalizations.of(context)!.currencySuffix}',
+                style: AppTextStyles.brand(context, size: 14),
               ),
             ],
           ),

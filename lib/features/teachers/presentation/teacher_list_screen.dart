@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../application/teacher_providers.dart';
 import '../data/teacher_models.dart';
 
@@ -33,9 +34,9 @@ class _TeacherListScreenState extends ConsumerState<TeacherListScreen> {
           child: TextField(
             controller: _searchController,
             textAlign: TextAlign.right,
-            decoration: const InputDecoration(
-              hintText: 'ابحث عن مدرس...',
-              prefixIcon: Icon(Icons.search, size: 18),
+            decoration: InputDecoration(
+              hintText: AppLocalizations.of(context)!.searchTeachersHint,
+              prefixIcon: const Icon(Icons.search, size: 18),
             ),
             onSubmitted: (value) =>
                 ref.read(teacherListProvider.notifier).search(value),
@@ -49,7 +50,7 @@ class _TeacherListScreenState extends ConsumerState<TeacherListScreen> {
                 : state.errorMessage != null && state.teachers.isEmpty
                 ? Center(child: Text(state.errorMessage!))
                 : state.teachers.isEmpty
-                ? const Center(child: Text('لا يوجد مدرسون حالياً.'))
+                ? Center(child: Text(AppLocalizations.of(context)!.noTeachersYet))
                 : ListView.separated(
                     padding: const EdgeInsets.all(16),
                     itemCount: state.teachers.length,
@@ -84,7 +85,7 @@ class _TeacherTile extends StatelessWidget {
                 backgroundColor: AppColors.neutral300,
                 child: Text(
                   teacher.name.isNotEmpty ? teacher.name[0] : '؟',
-                  style: AppTextStyles.brand(size: 16, color: fg),
+                  style: AppTextStyles.brand(context, size: 16, color: fg),
                 ),
               ),
               const SizedBox(width: 12),

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/arabic_numerals.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../application/learning_providers.dart';
 import '../data/my_course_models.dart';
 
@@ -20,18 +21,20 @@ class MyCoursesScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final coursesAsync = ref.watch(myCoursesProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     return RefreshIndicator(
       onRefresh: () => ref.refresh(myCoursesProvider.future),
       child: coursesAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('تعذّر تحميل كورساتك: $err')),
+        error: (err, _) =>
+            Center(child: Text(l10n.failedToLoadMyCourses(err.toString()))),
         data: (courses) {
           if (courses.isEmpty) {
             return ListView(
-              children: const [
-                SizedBox(height: 120),
-                Center(child: Text('لسه ماشتريتش أي كورس.')),
+              children: [
+                const SizedBox(height: 120),
+                Center(child: Text(l10n.noCoursesPurchasedYet)),
               ],
             );
           }
@@ -112,7 +115,7 @@ class _MyCourseCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    '${arDigits(course.progress)}٪',
+                    '${localizedDigits(context, course.progress)}٪',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,

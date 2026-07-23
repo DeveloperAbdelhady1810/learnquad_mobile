@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/arabic_numerals.dart';
+import '../../../l10n/gen/app_localizations.dart';
 import '../application/quiz_providers.dart';
 import '../data/quiz_models.dart';
 import '../data/quiz_repository.dart';
@@ -21,23 +21,24 @@ class _QuizTakingScreenState extends ConsumerState<QuizTakingScreen> {
   bool _isSubmitting = false;
 
   Future<void> _submit(QuizDetail quiz) async {
+    final l10n = AppLocalizations.of(context)!;
     final unanswered = quiz.questions.length - _answers.length;
     if (unanswered > 0) {
       final proceed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('أسئلة بدون إجابة'),
+          title: Text(l10n.unansweredQuestionsTitle),
           content: Text(
-            'لسه فاضل $unanswered سؤال بدون إجابة. عايز تسلّم برضه؟',
+            l10n.unansweredQuestionsBody(localizedDigits(context, unanswered)),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('إلغاء'),
+              child: Text(l10n.cancel),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('تسليم'),
+              child: Text(l10n.submit),
             ),
           ],
         ),
@@ -59,9 +60,9 @@ class _QuizTakingScreenState extends ConsumerState<QuizTakingScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isSubmitting = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('فشل التسليم: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.submitFailed(e.toString()))),
+        );
       }
     }
   }
@@ -69,9 +70,10 @@ class _QuizTakingScreenState extends ConsumerState<QuizTakingScreen> {
   @override
   Widget build(BuildContext context) {
     final quizAsync = ref.watch(quizDetailProvider(widget.quizId));
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('الاختبار')),
+      appBar: AppBar(title: Text(l10n.quizTitleFallback)),
       body: quizAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) {
@@ -88,7 +90,7 @@ class _QuizTakingScreenState extends ConsumerState<QuizTakingScreen> {
                       builder: (_) => QuizResultScreen(quizId: widget.quizId),
                     ),
                   ),
-                  child: const Text('عرض النتيجة بدلاً من ذلك'),
+                  child: Text(l10n.viewResultInstead),
                 ),
               ],
             ),
@@ -118,7 +120,10 @@ class _QuizTakingScreenState extends ConsumerState<QuizTakingScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    '${arDigits(_answers.length)} من ${arDigits(quiz.questions.length)} أسئلة مجابة',
+                    l10n.answeredOf(
+                      localizedDigits(context, _answers.length),
+                      localizedDigits(context, quiz.questions.length),
+                    ),
                     style: TextStyle(
                       fontSize: 12,
                       color: Theme.of(
@@ -166,7 +171,7 @@ class _QuizTakingScreenState extends ConsumerState<QuizTakingScreen> {
                             color: Colors.white,
                           ),
                         )
-                      : const Text('تسليم الإجابات'),
+                      : Text(l10n.submitAnswers),
                 ),
               ),
             ),
@@ -199,7 +204,7 @@ class _QuestionCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '${arDigits(index)}. ${question.questionText}',
+            '${localizedDigits(context, index)}. ${question.questionText}',
             style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5),
           ),
           const SizedBox(height: 10),
@@ -217,11 +222,15 @@ class _QuestionCard extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     border: Border.all(
-                      color: isSelected ? AppColors.accent : divider,
+                      color: isSelected
+                          ? Theme.of(context).colorScheme.primary
+                          : divider,
                       width: isSelected ? 2 : 1,
                     ),
                     color: isSelected
-                        ? AppColors.accent.withValues(alpha: 0.08)
+                        ? Theme.of(
+                            context,
+                          ).colorScheme.primary.withValues(alpha: 0.08)
                         : null,
                   ),
                   child: Text(entry.value, style: const TextStyle(fontSize: 13)),
