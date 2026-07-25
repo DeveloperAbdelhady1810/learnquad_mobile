@@ -85,6 +85,9 @@
   "tabContent": "Content",
   "tabQuizzes": "Quizzes",
   "failedToLoadLectures": "Failed to load lectures: {error}",
+  "upNext": "Up next",
+  "markCompleteNext": "Mark complete ✓",
+  "finishLecture": "Finish",
   "@failedToLoadLectures": { "placeholders": { "error": {} } },
 
   "failedToLoadQuizzes": "Failed to load quizzes: {error}",

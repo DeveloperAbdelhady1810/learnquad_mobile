@@ -86,6 +86,9 @@
   "tabQuizzes": "الاختبارات",
   "failedToLoadLectures": "تعذّر تحميل المحاضرات: {error}",
   "@failedToLoadLectures": { "placeholders": { "error": {} } },
+  "upNext": "التالي في القائمة",
+  "markCompleteNext": "إنهاء ✓",
+  "finishLecture": "إنهاء",
 
   "failedToLoadQuizzes": "تعذّر تحميل الاختبارات: {error}",
   "@failedToLoadQuizzes": { "placeholders": { "error": {} } },

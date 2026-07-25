@@ -3,55 +3,30 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/arabic_numerals.dart';
-import '../../../core/webview/bridge_webview_screen.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../courses/data/course_models.dart';
-import '../../purchase/data/webview_ticket_repository.dart';
 import '../../quizzes/presentation/quiz_list_screen.dart';
 import '../application/learning_providers.dart';
-import '../data/learning_repository.dart';
+import 'lecture_watch_screen.dart';
 
 class CourseLecturesScreen extends ConsumerWidget {
   const CourseLecturesScreen({super.key, required this.courseId});
   final int courseId;
 
-  Future<void> _watchLecture(
+  void _watchLecture(
     BuildContext context,
-    WidgetRef ref,
+    List<CourseSection> sections,
     CourseLecture lecture,
-  ) async {
-    try {
-      final bridgeUrl = await ref
-          .read(webviewTicketRepositoryProvider)
-          .requestLearnTicket(courseId: courseId, lectureId: lecture.id);
-
-      if (!context.mounted) return;
-      await Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) =>
-              BridgeWebViewScreen(initialUrl: bridgeUrl, title: lecture.title),
+  ) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => LectureWatchScreen(
+          courseId: courseId,
+          sections: sections,
+          initialLectureId: lecture.id,
         ),
-      );
-
-      // The web player tracks its own progress; mark complete natively too so
-      // the app's own lists (My Courses progress bar) update immediately
-      // without waiting on the next full refresh.
-      await ref
-          .read(learningRepositoryProvider)
-          .markLectureComplete(lecture.id);
-      ref.invalidate(courseLecturesProvider(courseId));
-      ref.invalidate(myCoursesProvider);
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              AppLocalizations.of(context)!.failedToOpenLecture(e.toString()),
-            ),
-          ),
-        );
-      }
-    }
+      ),
+    );
   }
 
   @override
@@ -124,7 +99,7 @@ class CourseLecturesScreen extends ConsumerWidget {
                               (section) => _SectionBlock(
                                 section: section,
                                 onTapLecture: (lecture) =>
-                                    _watchLecture(context, ref, lecture),
+                                    _watchLecture(context, sections, lecture),
                               ),
                             )
                             .toList(),
