@@ -131,6 +131,11 @@
   "enrolledCourses": "Enrolled courses",
   "completedCourses": "Completed courses",
   "overallProgress": "Overall progress",
+  "continueWatchingTitle": "Continue watching",
+  "sectionOf": "Section {position} of {total}",
+  "@sectionOf": { "placeholders": { "position": {}, "total": {} } },
+  "percentCompleteLabel": "{percent}% complete",
+  "@percentCompleteLabel": { "placeholders": { "percent": {} } },
 
   "markAllRead": "Mark all read",
   "failedToLoadNotifications": "Failed to load notifications: {error}",

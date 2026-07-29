@@ -131,6 +131,11 @@
   "enrolledCourses": "كورسات مسجّل بها",
   "completedCourses": "كورسات مكتملة",
   "overallProgress": "التقدم العام",
+  "continueWatchingTitle": "متابعة المشاهدة",
+  "sectionOf": "القسم {position} من {total}",
+  "@sectionOf": { "placeholders": { "position": {}, "total": {} } },
+  "percentCompleteLabel": "اكتمل {percent}٪",
+  "@percentCompleteLabel": { "placeholders": { "percent": {} } },
 
   "markAllRead": "تعليم الكل كمقروء",
   "failedToLoadNotifications": "تعذّر تحميل الإشعارات: {error}",

@@ -136,6 +136,7 @@ class _BottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fg = Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black;
+    final accent = Theme.of(context).colorScheme.primary;
     final l10n = AppLocalizations.of(context)!;
     final items = [
       (Icons.menu_book_outlined, l10n.navCourses),
@@ -147,33 +148,59 @@ class _BottomNav extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
+        color: Theme.of(context).colorScheme.surface,
         border: Border(
-          top: BorderSide(color: Theme.of(context).dividerColor, width: 2),
+          top: BorderSide(color: Theme.of(context).dividerColor),
         ),
       ),
-      padding: const EdgeInsets.only(top: 8, bottom: 12),
-      child: Row(
-        children: List.generate(items.length, (i) {
-          final (icon, label) = items[i];
-          final selected = i == index;
-          final color = selected
-              ? Theme.of(context).colorScheme.primary
-              : fg.withValues(alpha: 0.5);
-          return Expanded(
-            child: InkWell(
-              onTap: () => onChanged(i),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(icon, size: 20, color: color),
-                  const SizedBox(height: 4),
-                  Text(label, style: TextStyle(fontSize: 10, color: color)),
-                ],
-              ),
-            ),
-          );
-        }),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Row(
+            children: List.generate(items.length, (i) {
+              final (icon, label) = items[i];
+              final selected = i == index;
+              final color = selected ? accent : fg.withValues(alpha: 0.5);
+              return Expanded(
+                child: InkWell(
+                  borderRadius: AppRadius.mdBr,
+                  onTap: () => onChanged(i),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? accent.withValues(alpha: 0.15)
+                              : Colors.transparent,
+                          borderRadius: AppRadius.mdBr,
+                        ),
+                        child: Icon(icon, size: 20, color: color),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: selected
+                              ? FontWeight.w600
+                              : FontWeight.normal,
+                          color: color,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
       ),
     );
   }

@@ -5,11 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../network/api_client.dart';
 import 'app_theme.dart';
 
-/// Mirrors GET /api/settings/theme, which itself mirrors the admin's
-/// site-wide color choice on the web (`App\Helpers\Settings::activeThemeColors()`
-/// — see resources/views/layouts/app.blade.php on the Laravel side). When the
-/// admin changes the theme on the web (or picks a custom color), this app
-/// picks it up on next launch.
+/// Mirrors GET /api/settings/theme (`App\Helpers\Settings::mobileThemeColors()`
+/// on the Laravel side). By default that's the same color the admin picked
+/// for the website (`activeThemeColors()`), but the admin can flip a toggle
+/// in Admin Settings > Branding to give the app its own independent accent
+/// instead — e.g. the app's Nocturne purple — decoupled from the website.
+/// Either way, this app just fetches whatever the endpoint returns and picks
+/// it up on next launch.
 class RemoteThemeColors {
   const RemoteThemeColors({
     required this.primary,
