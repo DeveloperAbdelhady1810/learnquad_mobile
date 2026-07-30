@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:learnquad_mobile/features/splash/splash_screen.dart';
 import 'package:learnquad_mobile/main.dart';
 
 void main() {
@@ -9,6 +9,6 @@ void main() {
     await tester.pumpWidget(const ProviderScope(child: LearnQuadApp()));
     await tester.pump();
 
-    expect(find.byIcon(Icons.school_rounded), findsOneWidget);
+    expect(find.byType(SplashScreen), findsOneWidget);
   });
 }
