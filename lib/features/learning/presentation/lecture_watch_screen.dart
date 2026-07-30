@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:screen_protector/screen_protector.dart';
 
 import '../../../core/utils/arabic_numerals.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -53,6 +55,32 @@ class _LectureWatchScreenState extends ConsumerState<LectureWatchScreen> {
     _index = _flat.indexWhere((e) => e.$2.id == widget.initialLectureId);
     if (_index < 0) _index = 0;
     _loadTicket();
+    _setScreenshotProtection(true);
+  }
+
+  @override
+  void dispose() {
+    _setScreenshotProtection(false);
+    super.dispose();
+  }
+
+  /// Anti-piracy: block screenshots and screen recording while paid video
+  /// content is on screen (FLAG_SECURE on Android, a secure-view overlay on
+  /// iOS) — scoped to just this screen, turned back off on dispose so the
+  /// rest of the app isn't affected. `screen_protector` only implements
+  /// Android/iOS; guard web/desktop (used for local dev) so this can't crash
+  /// on a platform with no native handler registered.
+  void _setScreenshotProtection(bool enabled) {
+    if (kIsWeb) return;
+    try {
+      if (enabled) {
+        ScreenProtector.preventScreenshotOn();
+      } else {
+        ScreenProtector.preventScreenshotOff();
+      }
+    } catch (_) {
+      // Unsupported platform (e.g. desktop) — not a real distribution target.
+    }
   }
 
   (CourseSection, CourseLecture) get _current => _flat[_index];
