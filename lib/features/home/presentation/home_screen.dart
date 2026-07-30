@@ -54,10 +54,10 @@ class _StudentHomeState extends ConsumerState<_StudentHome> {
     final unreadCount = unreadAsync.value ?? 0;
     final l10n = AppLocalizations.of(context)!;
     final titles = [
+      l10n.navDashboard,
       l10n.navCourses,
       l10n.navTeachers,
       l10n.navMyCourses,
-      l10n.navDashboard,
       l10n.navProfile,
     ];
 
@@ -113,10 +113,10 @@ class _StudentHomeState extends ConsumerState<_StudentHome> {
       body: IndexedStack(
         index: _index,
         children: const [
+          DashboardScreen(),
           CourseListScreen(),
           TeacherListScreen(),
           MyCoursesScreen(),
-          DashboardScreen(),
           ProfileScreen(),
         ],
       ),
