@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../../core/theme/color_utils.dart';
 import '../../../core/utils/arabic_numerals.dart';
 import '../../../core/widgets/app_tag.dart';
+import '../../../core/widgets/initials_avatar.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../application/teacher_providers.dart';
 import '../data/teacher_models.dart';
@@ -17,7 +17,6 @@ class TeacherDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final teacherAsync = ref.watch(teacherDetailProvider(teacherId));
-    final accent = Theme.of(context).colorScheme.primary;
     final fg = Theme.of(context).textTheme.bodyMedium?.color;
     final divider = Theme.of(context).dividerColor;
     final l10n = AppLocalizations.of(context)!;
@@ -33,17 +32,11 @@ class TeacherDetailScreen extends ConsumerWidget {
           children: [
             Row(
               children: [
-                CircleAvatar(
+                InitialsAvatar(
+                  name: teacher.name,
+                  imageUrl: teacher.avatar,
                   radius: 32,
-                  backgroundColor: shadeColor(accent, 0.55),
-                  child: Text(
-                    teacher.name.isNotEmpty ? teacher.name[0] : '؟',
-                    style: AppTextStyles.brand(
-                      context,
-                      size: 22,
-                      color: tintColor(accent, 0.90),
-                    ),
-                  ),
+                  fontSize: 22,
                 ),
                 const SizedBox(width: 14),
                 Expanded(

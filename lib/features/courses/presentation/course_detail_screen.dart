@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../../core/theme/color_utils.dart';
 import '../../../core/utils/arabic_numerals.dart';
 import '../../../core/webview/bridge_webview_screen.dart';
 import '../../../core/widgets/app_tag.dart';
+import '../../../core/widgets/initials_avatar.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../learning/application/learning_providers.dart';
 import '../../purchase/data/webview_ticket_repository.dart';
@@ -165,25 +165,11 @@ class _CourseDetailBodyState extends ConsumerState<_CourseDetailBody> {
                       const SizedBox(height: 10),
                       Row(
                         children: [
-                          CircleAvatar(
+                          InitialsAvatar(
+                            name: course.teacherName!,
+                            imageUrl: course.teacherAvatar,
                             radius: 13,
-                            backgroundColor: shadeColor(
-                              Theme.of(context).colorScheme.primary,
-                              0.55,
-                            ),
-                            child: Text(
-                              course.teacherName!.isNotEmpty
-                                  ? course.teacherName![0]
-                                  : '؟',
-                              style: AppTextStyles.brand(
-                                context,
-                                size: 11,
-                                color: tintColor(
-                                  Theme.of(context).colorScheme.primary,
-                                  0.90,
-                                ),
-                              ),
-                            ),
+                            fontSize: 11,
                           ),
                           const SizedBox(width: 8),
                           Text(

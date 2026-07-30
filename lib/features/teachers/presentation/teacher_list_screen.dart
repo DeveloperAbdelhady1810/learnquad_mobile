@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../../core/theme/color_utils.dart';
+import '../../../core/widgets/initials_avatar.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../application/teacher_providers.dart';
 import '../data/teacher_models.dart';
@@ -73,7 +73,6 @@ class _TeacherTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent = Theme.of(context).colorScheme.primary;
     final fg = Theme.of(context).textTheme.bodyMedium?.color;
     return Container(
       clipBehavior: Clip.antiAlias,
@@ -91,17 +90,11 @@ class _TeacherTile extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                CircleAvatar(
+                InitialsAvatar(
+                  name: teacher.name,
+                  imageUrl: teacher.avatar,
                   radius: 22,
-                  backgroundColor: shadeColor(accent, 0.55),
-                  child: Text(
-                    teacher.name.isNotEmpty ? teacher.name[0] : '؟',
-                    style: AppTextStyles.brand(
-                      context,
-                      size: 15,
-                      color: tintColor(accent, 0.90),
-                    ),
-                  ),
+                  fontSize: 15,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
