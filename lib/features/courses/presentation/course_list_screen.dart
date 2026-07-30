@@ -108,10 +108,10 @@ class _CourseListScreenState extends ConsumerState<CourseListScreen> {
 }
 
 const _swatches = [
-  Color(0xFF7C1405),
-  Color(0xFF8B2E1F),
-  Color(0xFF605D5D),
-  Color(0xFF444141),
+  AppColors.accent500,
+  AppColors.accent700,
+  AppColors.neutral600,
+  AppColors.neutral800,
 ];
 
 class _CourseCard extends StatelessWidget {
@@ -120,69 +120,81 @@ class _CourseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final color = _swatches[course.id % _swatches.length];
     final initial = course.subject?.isNotEmpty == true
         ? course.subject![0]
         : course.title[0];
 
-    return Material(
-      color: Theme.of(context).cardTheme.color,
-      child: InkWell(
-        onTap: () => context.push('/courses/${course.id}'),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                color: color,
-                alignment: Alignment.center,
-                child: Text(
-                  initial,
-                  style: AppTextStyles.brand(
-                    context,
-                    size: 20,
-                    color: Theme.of(context).scaffoldBackgroundColor,
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: AppRadius.mdBr,
+        border: Border.all(color: AppElevation.ringSm(isDark)),
+        boxShadow: AppElevation.sm(isDark),
+      ),
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: () => context.push('/courses/${course.id}'),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: AppRadius.smBr,
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    initial,
+                    style: AppTextStyles.brand(
+                      context,
+                      size: 20,
+                      color: AppColors.onAccent,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      course.title,
-                      style: Theme.of(context).textTheme.titleMedium
-                          ?.copyWith(fontSize: 15),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    if (course.teacherName != null)
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text(
-                        course.teacherName!,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Theme.of(
-                            context,
-                          ).textTheme.bodyMedium?.color?.withValues(alpha: 0.75),
-                        ),
+                        course.title,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontSize: 15),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    const SizedBox(height: 4),
-                    if (course.grade != null)
-                      AppTag(course.grade!, variant: AppTagVariant.neutral),
-                  ],
+                      const SizedBox(height: 2),
+                      if (course.teacherName != null)
+                        Text(
+                          course.teacherName!,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Theme.of(context).textTheme.bodyMedium?.color
+                                ?.withValues(alpha: 0.75),
+                          ),
+                        ),
+                      const SizedBox(height: 4),
+                      if (course.grade != null)
+                        AppTag(course.grade!, variant: AppTagVariant.neutral),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '${localizedDigits(context, course.price.toStringAsFixed(0))} '
-                '${AppLocalizations.of(context)!.currencySuffix}',
-                style: AppTextStyles.brand(context, size: 14),
-              ),
-            ],
+                const SizedBox(width: 8),
+                Text(
+                  '${localizedDigits(context, course.price.toStringAsFixed(0))} '
+                  '${AppLocalizations.of(context)!.currencySuffix}',
+                  style: AppTextStyles.brand(context, size: 14),
+                ),
+              ],
+            ),
           ),
         ),
       ),

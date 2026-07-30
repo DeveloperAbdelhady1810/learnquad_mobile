@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/labeled_field.dart';
 import '../../../core/widgets/logo_mark.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -76,6 +77,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: Colors.red.withValues(alpha: 0.08),
+                        borderRadius: AppRadius.mdBr,
                         border: Border.all(
                           color: Colors.red.withValues(alpha: 0.3),
                         ),

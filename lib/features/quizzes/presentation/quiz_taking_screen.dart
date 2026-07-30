@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/arabic_numerals.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../application/quiz_providers.dart';
@@ -103,10 +104,7 @@ class _QuizTakingScreenState extends ConsumerState<QuizTakingScreen> {
               padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
               decoration: BoxDecoration(
                 border: Border(
-                  bottom: BorderSide(
-                    color: Theme.of(context).dividerColor,
-                    width: 2,
-                  ),
+                  bottom: BorderSide(color: Theme.of(context).dividerColor),
                 ),
               ),
               child: Column(
@@ -151,11 +149,9 @@ class _QuizTakingScreenState extends ConsumerState<QuizTakingScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
                 border: Border(
-                  top: BorderSide(
-                    color: Theme.of(context).dividerColor,
-                    width: 2,
-                  ),
+                  top: BorderSide(color: Theme.of(context).dividerColor),
                 ),
               ),
               child: SafeArea(
@@ -213,6 +209,7 @@ class _QuestionCard extends StatelessWidget {
             return Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: InkWell(
+                borderRadius: AppRadius.mdBr,
                 onTap: () => onSelect(entry.key),
                 child: Container(
                   width: double.infinity,
@@ -221,6 +218,7 @@ class _QuestionCard extends StatelessWidget {
                     vertical: 10,
                   ),
                   decoration: BoxDecoration(
+                    borderRadius: AppRadius.mdBr,
                     border: Border.all(
                       color: isSelected
                           ? Theme.of(context).colorScheme.primary
@@ -233,7 +231,33 @@ class _QuestionCard extends StatelessWidget {
                           ).colorScheme.primary.withValues(alpha: 0.08)
                         : null,
                   ),
-                  child: Text(entry.value, style: const TextStyle(fontSize: 13)),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 16,
+                        height: 16,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isSelected
+                                ? Theme.of(context).colorScheme.primary
+                                : divider,
+                            width: 1.5,
+                          ),
+                          color: isSelected
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.transparent,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          entry.value,
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );

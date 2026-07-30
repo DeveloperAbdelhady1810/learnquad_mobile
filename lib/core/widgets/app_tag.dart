@@ -5,11 +5,13 @@ import '../theme/color_utils.dart';
 
 enum AppTagVariant { accent, outline, neutral }
 
-/// Small flat label pill — matches `.tag` / `.tag-accent` / `.tag-outline` /
-/// `.tag-neutral` in the design system. Square corners like everything else
-/// in this system; only the tag's own font size is small enough that a
-/// quarter-radius reads as "pill" at a glance in the original mockups, so
-/// this intentionally stays square rather than rounded for consistency.
+/// Small pill-shaped badge — matches `.tag` / `.tag-accent` / `.tag-outline`
+/// / `.tag-neutral` in ds-nocturne.css. `accent` derives a fixed-direction
+/// dark-shade background + light-tint text from whichever accent color is
+/// currently active (admin-configurable — see remote_theme.dart), matching
+/// Nocturne's `accent-800`/`accent-100` ramp steps without hardcoding them
+/// (the ramp itself doesn't flip between light/dark mode, so neither does
+/// the tag — same as `neutral`, which uses the fixed neutral ramp directly).
 class AppTag extends StatelessWidget {
   const AppTag(this.label, {super.key, this.variant = AppTagVariant.neutral});
 
@@ -18,7 +20,6 @@ class AppTag extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = Theme.of(context).colorScheme.primary;
 
     late final Color bg;
@@ -27,20 +28,24 @@ class AppTag extends StatelessWidget {
 
     switch (variant) {
       case AppTagVariant.accent:
-        bg = tintColor(accent, 0.92);
-        fg = shadeColor(accent, 0.5);
+        bg = shadeColor(accent, 0.55);
+        fg = tintColor(accent, 0.90);
       case AppTagVariant.outline:
         bg = Colors.transparent;
         fg = accent;
         border = Border.all(color: accent);
       case AppTagVariant.neutral:
-        bg = isDark ? AppColors.neutral800 : AppColors.neutral100;
-        fg = isDark ? AppColors.neutral100 : AppColors.neutral800;
+        bg = AppColors.neutral800;
+        fg = AppColors.neutral100;
     }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: bg, border: border),
+      decoration: BoxDecoration(
+        color: bg,
+        border: border,
+        borderRadius: BorderRadius.circular(AppRadius.md * 0.75),
+      ),
       child: Text(
         label,
         style: TextStyle(fontSize: 11, color: fg, letterSpacing: 0.2),

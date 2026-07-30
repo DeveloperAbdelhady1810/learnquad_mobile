@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/color_utils.dart';
 import '../../../core/utils/arabic_numerals.dart';
 import '../../../core/webview/bridge_webview_screen.dart';
 import '../../../core/widgets/app_tag.dart';
@@ -13,10 +14,10 @@ import '../application/course_providers.dart';
 import '../data/course_models.dart';
 
 const _swatches = [
-  Color(0xFF7C1405),
-  Color(0xFF8B2E1F),
-  Color(0xFF605D5D),
-  Color(0xFF444141),
+  AppColors.accent500,
+  AppColors.accent700,
+  AppColors.neutral600,
+  AppColors.neutral800,
 ];
 
 class CourseDetailScreen extends ConsumerWidget {
@@ -130,7 +131,12 @@ class _CourseDetailBodyState extends ConsumerState<_CourseDetailBody> {
                         left: 0,
                         bottom: 0,
                         child: Container(
-                          color: bg,
+                          decoration: BoxDecoration(
+                            color: bg,
+                            borderRadius: BorderRadius.circular(
+                              AppRadius.md * 0.75,
+                            ),
+                          ),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 10,
                             vertical: 4,
@@ -161,7 +167,23 @@ class _CourseDetailBodyState extends ConsumerState<_CourseDetailBody> {
                         children: [
                           CircleAvatar(
                             radius: 13,
-                            backgroundColor: AppColors.neutral300,
+                            backgroundColor: shadeColor(
+                              Theme.of(context).colorScheme.primary,
+                              0.55,
+                            ),
+                            child: Text(
+                              course.teacherName!.isNotEmpty
+                                  ? course.teacherName![0]
+                                  : '؟',
+                              style: AppTextStyles.brand(
+                                context,
+                                size: 11,
+                                color: tintColor(
+                                  Theme.of(context).colorScheme.primary,
+                                  0.90,
+                                ),
+                              ),
+                            ),
                           ),
                           const SizedBox(width: 8),
                           Text(
@@ -202,11 +224,7 @@ class _CourseDetailBodyState extends ConsumerState<_CourseDetailBody> {
                     ],
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 18),
-                      child: Divider(
-                        height: 2,
-                        thickness: 2,
-                        color: Theme.of(context).dividerColor,
-                      ),
+                      child: Divider(color: Theme.of(context).dividerColor),
                     ),
                     Text(
                       l10n.courseContent,
@@ -238,8 +256,9 @@ class _CourseDetailBodyState extends ConsumerState<_CourseDetailBody> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
             border: Border(
-              top: BorderSide(color: Theme.of(context).dividerColor, width: 2),
+              top: BorderSide(color: Theme.of(context).dividerColor),
             ),
           ),
           child: SafeArea(

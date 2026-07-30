@@ -121,6 +121,7 @@
   "@correctAnswersOf": { "placeholders": { "score": {}, "total": {} } },
   "yourAnswerPrefix": "إجابتك",
   "correctAnswerPrefix": "الصحيحة",
+  "incorrectCountLabel": "غير صحيحة",
   "noAnswer": "(بدون إجابة)",
 
   "dashboardGreeting": "أهلاً يا {name} 👋",

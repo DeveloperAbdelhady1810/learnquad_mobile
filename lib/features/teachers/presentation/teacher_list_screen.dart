@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/color_utils.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../application/teacher_providers.dart';
 import '../data/teacher_models.dart';
@@ -71,51 +72,67 @@ class _TeacherTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = Theme.of(context).colorScheme.primary;
     final fg = Theme.of(context).textTheme.bodyMedium?.color;
-    return Material(
-      color: Theme.of(context).cardTheme.color,
-      child: InkWell(
-        onTap: () => context.push('/teachers/${teacher.id}'),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 26,
-                backgroundColor: AppColors.neutral300,
-                child: Text(
-                  teacher.name.isNotEmpty ? teacher.name[0] : '؟',
-                  style: AppTextStyles.brand(context, size: 16, color: fg),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      teacher.name,
-                      style: Theme.of(context).textTheme.titleMedium
-                          ?.copyWith(fontSize: 15),
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: AppRadius.mdBr,
+        border: Border.all(color: AppElevation.ringSm(isDark)),
+        boxShadow: AppElevation.sm(isDark),
+      ),
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: () => context.push('/teachers/${teacher.id}'),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 22,
+                  backgroundColor: shadeColor(accent, 0.55),
+                  child: Text(
+                    teacher.name.isNotEmpty ? teacher.name[0] : '؟',
+                    style: AppTextStyles.brand(
+                      context,
+                      size: 15,
+                      color: tintColor(accent, 0.90),
                     ),
-                    if (teacher.subjects.isNotEmpty || teacher.educationStages.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        [
-                          ...teacher.subjects,
-                          ...teacher.educationStages,
-                        ].join(' · '),
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: fg?.withValues(alpha: 0.75),
-                        ),
-                      ),
-                    ],
-                  ],
+                  ),
                 ),
-              ),
-              Icon(Icons.chevron_left, color: fg?.withValues(alpha: 0.4)),
-            ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        teacher.name,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontSize: 15),
+                      ),
+                      if (teacher.subjects.isNotEmpty ||
+                          teacher.educationStages.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          [
+                            ...teacher.subjects,
+                            ...teacher.educationStages,
+                          ].join(' · '),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: fg?.withValues(alpha: 0.75),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                Icon(Icons.chevron_left, color: fg?.withValues(alpha: 0.4)),
+              ],
+            ),
           ),
         ),
       ),

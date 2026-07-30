@@ -28,6 +28,8 @@ class QuizResultScreen extends ConsumerWidget {
           children: [
             Center(child: _ScoreBadge(result: result)),
             const SizedBox(height: 22),
+            _CorrectIncorrectGrid(result: result),
+            const SizedBox(height: 22),
             Text(
               l10n.answersTitle,
               style: Theme.of(
@@ -50,22 +52,50 @@ class _ScoreBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fg = Theme.of(context).textTheme.bodyMedium?.color;
+    final accent = Theme.of(context).colorScheme.primary;
     final l10n = AppLocalizations.of(context)!;
+    final ratio = (result.percentage / 100).clamp(0, 1).toDouble();
     return Column(
       children: [
-        Container(
-          width: 120,
-          height: 120,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: Theme.of(context).colorScheme.primary,
-              width: 6,
-            ),
-          ),
-          child: Text(
-            '${localizedDigits(context, result.percentage.round())}٪',
-            style: AppTextStyles.brand(context, size: 32, color: fg),
+        SizedBox(
+          width: 128,
+          height: 128,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              SizedBox.expand(
+                child: CircularProgressIndicator(
+                  value: 1,
+                  strokeWidth: 6,
+                  color: AppColors.neutral800,
+                ),
+              ),
+              SizedBox.expand(
+                child: CircularProgressIndicator(
+                  value: ratio,
+                  strokeWidth: 6,
+                  color: accent,
+                  strokeCap: StrokeCap.round,
+                ),
+              ),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    localizedPercent(context, result.percentage),
+                    style: AppTextStyles.brand(context, size: 32, color: fg),
+                  ),
+                  Text(
+                    '${localizedDigits(context, result.score)} / '
+                    '${localizedDigits(context, result.totalScore)}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: fg?.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 16),
@@ -84,6 +114,73 @@ class _ScoreBadge extends StatelessWidget {
           ).textTheme.titleMedium?.copyWith(fontSize: 15),
         ),
       ],
+    );
+  }
+}
+
+class _CorrectIncorrectGrid extends StatelessWidget {
+  const _CorrectIncorrectGrid({required this.result});
+  final QuizResult result;
+
+  @override
+  Widget build(BuildContext context) {
+    final correct = result.answers.where((a) => a.isCorrect).length;
+    final incorrect = result.answers.length - correct;
+    final l10n = AppLocalizations.of(context)!;
+    final accent = Theme.of(context).colorScheme.primary;
+    return Row(
+      children: [
+        Expanded(
+          child: _StatCell(
+            value: localizedDigits(context, correct),
+            label: l10n.correctAnswerPrefix,
+            color: accent,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _StatCell(
+            value: localizedDigits(context, incorrect),
+            label: l10n.incorrectCountLabel,
+            color: null,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StatCell extends StatelessWidget {
+  const _StatCell({required this.value, required this.label, this.color});
+  final String value;
+  final String label;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fg = Theme.of(context).textTheme.bodyMedium?.color;
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: AppRadius.mdBr,
+        border: Border.all(color: AppElevation.ringSm(isDark)),
+        boxShadow: AppElevation.sm(isDark),
+      ),
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: AppTextStyles.brand(context, size: 20, color: color ?? fg),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: TextStyle(fontSize: 11, color: fg?.withValues(alpha: 0.55)),
+          ),
+        ],
+      ),
     );
   }
 }

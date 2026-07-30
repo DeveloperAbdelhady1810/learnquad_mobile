@@ -22,3 +22,12 @@ String localizedDigits(BuildContext context, Object value) {
   final isArabic = Localizations.localeOf(context).languageCode == 'ar';
   return isArabic ? _toArabicDigits(value) : value.toString();
 }
+
+/// Same digit localization, plus the matching percent-sign glyph (٪ vs %) —
+/// use this instead of hardcoding "٪" after a digit string, which renders
+/// wrong under the English locale.
+String localizedPercent(BuildContext context, num value) {
+  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+  final digits = localizedDigits(context, value.round());
+  return isArabic ? '$digits٪' : '$digits%';
+}

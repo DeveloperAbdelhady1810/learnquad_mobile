@@ -95,7 +95,6 @@ class _StatGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final divider = Theme.of(context).dividerColor;
     final l10n = AppLocalizations.of(context)!;
     final cells = [
       (localizedDigits(context, stats.students), l10n.totalStudents, false),
@@ -107,47 +106,68 @@ class _StatGrid extends StatelessWidget {
       (localizedDigits(context, stats.courses), l10n.activeCourses, false),
     ];
 
-    return Container(
-      decoration: BoxDecoration(border: Border.all(color: divider, width: 2)),
-      child: Row(
-        children: List.generate(cells.length, (i) {
-          final (value, label, accent) = cells[i];
-          return Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 6),
-              decoration: BoxDecoration(
-                border: i < cells.length - 1
-                    ? Border(right: BorderSide(color: divider, width: 2))
-                    : null,
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    value,
-                    style: AppTextStyles.brand(
-                      context,
-                      size: 20,
-                      color: accent
-                          ? Theme.of(context).colorScheme.primary
-                          : Theme.of(context).textTheme.bodyMedium?.color,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    label,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 10.5,
-                      color: Theme.of(
-                        context,
-                      ).textTheme.bodyMedium?.color?.withValues(alpha: 0.55),
-                    ),
-                  ),
-                ],
-              ),
+    return Row(
+      children: [
+        for (var i = 0; i < cells.length; i++) ...[
+          if (i > 0) const SizedBox(width: 8),
+          Expanded(
+            child: _StatCard(
+              value: cells[i].$1,
+              label: cells[i].$2,
+              accent: cells[i].$3,
             ),
-          );
-        }),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  const _StatCard({
+    required this.value,
+    required this.label,
+    required this.accent,
+  });
+  final String value;
+  final String label;
+  final bool accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 6),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: AppRadius.mdBr,
+        border: Border.all(color: AppElevation.ringSm(isDark)),
+        boxShadow: AppElevation.sm(isDark),
+      ),
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: AppTextStyles.brand(
+              context,
+              size: 19,
+              color: accent
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).textTheme.bodyMedium?.color,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 10.5,
+              color: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.color?.withValues(alpha: 0.55),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -188,9 +208,10 @@ class _CourseEnrollmentRow extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 5),
-          SizedBox(
-            height: 8,
-            child: ClipRect(
+          ClipRRect(
+            borderRadius: AppRadius.smBr,
+            child: SizedBox(
+              height: 8,
               child: LinearProgressIndicator(
                 value: ratio,
                 backgroundColor: AppColors.neutral300,

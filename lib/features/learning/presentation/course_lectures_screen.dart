@@ -70,9 +70,10 @@ class CourseLecturesScreen extends ConsumerWidget {
                       child: Row(
                         children: [
                           Expanded(
-                            child: SizedBox(
-                              height: 6,
-                              child: ClipRect(
+                            child: ClipRRect(
+                              borderRadius: AppRadius.smBr,
+                              child: SizedBox(
+                                height: 6,
                                 child: LinearProgressIndicator(
                                   value: progress,
                                   backgroundColor: AppColors.neutral300,
@@ -82,7 +83,7 @@ class CourseLecturesScreen extends ConsumerWidget {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            '${localizedDigits(context, (progress * 100).round())}٪',
+                            localizedPercent(context, progress * 100),
                             style: TextStyle(
                               fontSize: 11,
                               color: fg?.withValues(alpha: 0.65),
@@ -124,68 +125,81 @@ class _SectionBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final fg = Theme.of(context).textTheme.bodyMedium?.color;
-    final divider = Theme.of(context).dividerColor;
     return Padding(
       padding: const EdgeInsets.only(top: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.only(bottom: 8),
-            margin: const EdgeInsets.only(bottom: 4),
-            decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: divider, width: 2)),
+          Text(
+            section.title,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+              letterSpacing: 0.6,
+              color: fg?.withValues(alpha: 0.7),
             ),
-            child: Text(
-              section.title,
-              style: const TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 13.5,
+          ),
+          const SizedBox(height: 8),
+          Container(
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: AppRadius.mdBr,
+              border: Border.all(color: AppElevation.ringSm(isDark)),
+              boxShadow: AppElevation.sm(isDark),
+            ),
+            child: Material(
+              type: MaterialType.transparency,
+              child: Column(
+                children: section.lectures.map((lecture) {
+                  final completed = lecture.completed == true;
+                  return InkWell(
+                    onTap: () => onTapLecture(lecture),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            completed
+                                ? Icons.check_circle
+                                : Icons.play_circle_outline,
+                            size: 18,
+                            color: completed
+                                ? Theme.of(context).colorScheme.primary
+                                : fg?.withValues(alpha: 0.55),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              lecture.title,
+                              style: const TextStyle(fontSize: 13.5),
+                            ),
+                          ),
+                          if (!completed &&
+                              (lecture.progressPercentage ?? 0) > 0)
+                            Text(
+                              localizedPercent(
+                                context,
+                                lecture.progressPercentage ?? 0,
+                              ),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: fg?.withValues(alpha: 0.55),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
               ),
             ),
           ),
-          ...section.lectures.map((lecture) {
-            final completed = lecture.completed == true;
-            return InkWell(
-              onTap: () => onTapLecture(lecture),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  border: Border(bottom: BorderSide(color: divider)),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      completed
-                          ? Icons.check_circle
-                          : Icons.play_circle_outline,
-                      size: 18,
-                      color: completed
-                          ? Theme.of(context).colorScheme.primary
-                          : fg?.withValues(alpha: 0.55),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        lecture.title,
-                        style: const TextStyle(fontSize: 13.5),
-                      ),
-                    ),
-                    if (!completed && (lecture.progressPercentage ?? 0) > 0)
-                      Text(
-                        '${localizedDigits(context, lecture.progressPercentage ?? 0)}٪',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: fg?.withValues(alpha: 0.55),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            );
-          }),
         ],
       ),
     );

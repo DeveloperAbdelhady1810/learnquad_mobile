@@ -26,23 +26,39 @@ class AppColors {
 
   // Dark mode — Nocturne's native navy ground.
   static const bgDark = Color(0xFF161826);
-  static const surfaceDark = Color(0xFF1E2133);
-  static const textDark = Color(0xFFF3F1FA);
+  static const surfaceDark = Color(0xFF232532);
+  static const textDark = Color(0xFFE9E9ED);
 
   // Fallback accent — used only until the remote theme loads / if it fails.
   // Nocturne purple (#9184d9) — the app's own design-system accent.
   static const accent = Color(0xFF9184D9);
-  static const accent700 = Color(0xFF776CB2);
+  static const accent700 = Color(0xFF5D5294);
   static const onAccent = Color(0xFFF8F8FC);
 
-  // Purple-tinted neutral ramp (replaces the old warm-gray Modernist ramp)
-  // used for progress tracks, subtle fills, and disabled states.
-  static const neutral100 = Color(0xFFF5F4FB);
-  static const neutral200 = Color(0xFFE7E5F2);
-  static const neutral300 = Color(0xFFD3D0E8);
-  static const neutral700 = Color(0xFF6B6684);
-  static const neutral800 = Color(0xFF3A3752);
-  static const neutral900 = Color(0xFF1E2133);
+  // Accent tonal ramp (--color-accent-100..900 in ds-nocturne.css) — used for
+  // tag chips (subject/grade badges: bg accent800, text accent100) and any
+  // hover/active states.
+  static const accent100 = Color(0xFFF5F4FF);
+  static const accent200 = Color(0xFFE7E5FE);
+  static const accent300 = Color(0xFFD2CEFD);
+  static const accent400 = Color(0xFFB5ABFC);
+  static const accent500 = Color(0xFF968AE0);
+  static const accent600 = Color(0xFF796CBF);
+  static const accent800 = Color(0xFF423A6A);
+  static const accent900 = Color(0xFF2B2741);
+
+  // Purple-tinted neutral ramp (--color-neutral-100..900), replacing the old
+  // warm-gray Modernist ramp — used for progress tracks, subtle fills,
+  // disabled states, and elevation ring colors.
+  static const neutral100 = Color(0xFFF3F5FE);
+  static const neutral200 = Color(0xFFE4E7F5);
+  static const neutral300 = Color(0xFFCFD3E5);
+  static const neutral400 = Color(0xFFB2B6CA);
+  static const neutral500 = Color(0xFF9397AB);
+  static const neutral600 = Color(0xFF75798C);
+  static const neutral700 = Color(0xFF595D6C);
+  static const neutral800 = Color(0xFF3F424D);
+  static const neutral900 = Color(0xFF292B31);
 }
 
 class AppSpacing {
@@ -72,26 +88,56 @@ class AppRadius {
 /// automatically instead of needing a per-file edit. Maps to the mid tier.
 const kRadius = AppRadius.mdBr;
 
-/// Nocturne's elevation identity: a hairline ring plus an ambient shadow on
-/// dark surfaces, a softer ink-tinted shadow (no ring) on light surfaces.
+/// Nocturne's elevation identity (`--shadow-sm/md/lg` in ds-nocturne.css): a
+/// hairline ring plus an ambient shadow on dark surfaces, a softer
+/// ink-tinted shadow (no ring) on light surfaces. The ring is a separate
+/// `Border.all(color: AppElevation.ringXx(isDark))` — CSS's `0 0 0 1px`
+/// shadow entry has no direct BoxShadow equivalent, so pair the ring color
+/// with the blur list below (e.g. `border: Border.all(color:
+/// AppElevation.ringMd(isDark))`, `boxShadow: AppElevation.md(isDark)`).
 class AppElevation {
   AppElevation._();
 
-  static List<BoxShadow> card(bool isDark) => isDark
-      ? [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.35),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
-          ),
-        ]
+  static Color ringSm(bool isDark) =>
+      isDark ? AppColors.neutral800 : AppColors.text.withValues(alpha: 0.10);
+  static Color ringMd(bool isDark) =>
+      isDark ? AppColors.neutral700 : AppColors.text.withValues(alpha: 0.12);
+  static Color ringLg(bool isDark) =>
+      isDark ? AppColors.neutral500 : AppColors.text.withValues(alpha: 0.16);
+
+  static List<BoxShadow> sm(bool isDark) => isDark
+      ? const []
       : [
           BoxShadow(
-            color: AppColors.text.withValues(alpha: 0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 6),
+            color: AppColors.text.withValues(alpha: 0.10),
+            blurRadius: 2,
+            offset: const Offset(0, 1),
           ),
         ];
+
+  static List<BoxShadow> md(bool isDark) => [
+    BoxShadow(
+      color: isDark
+          ? Colors.black.withValues(alpha: 0.55)
+          : AppColors.text.withValues(alpha: 0.12),
+      blurRadius: 18,
+      offset: const Offset(0, 6),
+    ),
+  ];
+
+  static List<BoxShadow> lg(bool isDark) => [
+    BoxShadow(
+      color: isDark
+          ? Colors.black.withValues(alpha: 0.65)
+          : AppColors.text.withValues(alpha: 0.16),
+      blurRadius: 40,
+      offset: const Offset(0, 16),
+    ),
+  ];
+
+  /// Convenience alias for the mid tier — the tier already in use across the
+  /// Dashboard's cards.
+  static List<BoxShadow> card(bool isDark) => md(isDark);
 }
 
 class AppTheme {
@@ -107,7 +153,7 @@ class AppTheme {
     final bg = isDark ? AppColors.bgDark : AppColors.bg;
     final surface = isDark ? AppColors.surfaceDark : AppColors.surface;
     final fg = isDark ? AppColors.textDark : AppColors.text;
-    final divider = fg.withValues(alpha: isDark ? 0.14 : 0.10);
+    final divider = fg.withValues(alpha: isDark ? 0.16 : 0.12);
 
     // Arabic is the app's primary language — IBM Plex Sans Arabic stays the
     // base text theme (Inter has no meaningful Arabic glyph coverage).

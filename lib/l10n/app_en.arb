@@ -121,6 +121,7 @@
   "@correctAnswersOf": { "placeholders": { "score": {}, "total": {} } },
   "yourAnswerPrefix": "Your answer",
   "correctAnswerPrefix": "Correct",
+  "incorrectCountLabel": "Incorrect",
   "noAnswer": "(no answer)",
 
   "dashboardGreeting": "Hey {name} 👋",

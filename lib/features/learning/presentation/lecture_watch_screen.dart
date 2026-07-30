@@ -16,7 +16,7 @@ import '../data/learning_repository.dart';
 /// stripping the site's own nav/sidebar/top-bar, see
 /// resources/views/student/learn.blade.php on the Laravel side), but
 /// everything structurally around it — app bar, position-in-course context,
-/// up-next, prev/next, mark-complete — is native Modernist chrome. The
+/// up-next, prev/next, mark-complete — is native Nocturne chrome. The
 /// WebView gets the full remaining height (not a fixed video-only box) since
 /// the real page has real content below the player that must stay reachable.
 class LectureWatchScreen extends ConsumerStatefulWidget {
@@ -182,7 +182,7 @@ class _LectureWatchScreenState extends ConsumerState<LectureWatchScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 decoration: BoxDecoration(
-                  border: Border(top: BorderSide(color: divider, width: 2)),
+                  border: Border(top: BorderSide(color: divider)),
                 ),
                 child: InkWell(
                   onTap: () => _goTo(_index + 1),
@@ -216,7 +216,7 @@ class _LectureWatchScreenState extends ConsumerState<LectureWatchScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                border: Border(top: BorderSide(color: divider, width: 2)),
+                border: Border(top: BorderSide(color: divider)),
               ),
               child: SafeArea(
                 top: false,

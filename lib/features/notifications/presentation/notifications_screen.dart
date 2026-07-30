@@ -2,9 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/theme/color_utils.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../application/notification_providers.dart';
 import '../data/notification_repository.dart';
+
+/// Matches the real notification `type` values created by
+/// `App\Models\Notification::createFor()` (see PaymobController,
+/// StudentCourseController, LectureController on the Laravel side) —
+/// anything else falls back to a generic bell.
+IconData _iconFor(String type) {
+  switch (type) {
+    case 'course_enrolled':
+      return Icons.school_outlined;
+    case 'payment_received':
+      return Icons.payments_outlined;
+    case 'new_lecture':
+      return Icons.play_circle_outline;
+    default:
+      return Icons.notifications_outlined;
+  }
+}
 
 class NotificationsScreen extends ConsumerWidget {
   const NotificationsScreen({super.key});
@@ -72,20 +90,26 @@ class NotificationsScreen extends ConsumerWidget {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.only(top: 6),
-                          child: Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: n.isUnread
-                                  ? Theme.of(context).colorScheme.primary
-                                  : Colors.transparent,
-                              shape: BoxShape.circle,
-                            ),
+                        CircleAvatar(
+                          radius: 18,
+                          backgroundColor: n.isUnread
+                              ? shadeColor(
+                                  Theme.of(context).colorScheme.primary,
+                                  0.55,
+                                )
+                              : Theme.of(context).colorScheme.surface,
+                          child: Icon(
+                            _iconFor(n.type),
+                            size: 17,
+                            color: n.isUnread
+                                ? tintColor(
+                                    Theme.of(context).colorScheme.primary,
+                                    0.90,
+                                  )
+                                : fg?.withValues(alpha: 0.55),
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,

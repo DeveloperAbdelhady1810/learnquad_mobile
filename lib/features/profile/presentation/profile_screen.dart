@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/locale/locale_controller.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/color_utils.dart';
 import '../../../core/widgets/app_tag.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../auth/application/auth_controller.dart';
@@ -39,7 +40,6 @@ class ProfileScreen extends ConsumerWidget {
     final userAsync = ref.watch(currentUserProvider);
     final locale = ref.watch(localeControllerProvider);
     final l10n = AppLocalizations.of(context)!;
-    final fg = Theme.of(context).textTheme.bodyMedium?.color;
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.profileTitle)),
@@ -54,10 +54,20 @@ class ProfileScreen extends ConsumerWidget {
               children: [
                 CircleAvatar(
                   radius: 32,
-                  backgroundColor: AppColors.neutral300,
+                  backgroundColor: shadeColor(
+                    Theme.of(context).colorScheme.primary,
+                    0.55,
+                  ),
                   child: Text(
                     user.name.isNotEmpty ? user.name[0] : '؟',
-                    style: AppTextStyles.brand(context, size: 24, color: fg),
+                    style: AppTextStyles.brand(
+                      context,
+                      size: 22,
+                      color: tintColor(
+                        Theme.of(context).colorScheme.primary,
+                        0.90,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -89,10 +99,14 @@ class ProfileScreen extends ConsumerWidget {
               ).textTheme.titleMedium?.copyWith(fontSize: 14),
             ),
             const SizedBox(height: 10),
-            _InfoRow(label: l10n.nameLabel, value: user.name),
-            _InfoRow(label: l10n.emailLabel, value: user.email),
-            if (user.phone != null && user.phone!.isNotEmpty)
-              _InfoRow(label: l10n.phoneLabel, value: user.phone!),
+            _InfoCard(
+              rows: [
+                (l10n.nameLabel, user.name),
+                (l10n.emailLabel, user.email),
+                if (user.phone != null && user.phone!.isNotEmpty)
+                  (l10n.phoneLabel, user.phone!),
+              ],
+            ),
             const SizedBox(height: 28),
             Text(
               l10n.languageLabel,
@@ -119,28 +133,49 @@ class ProfileScreen extends ConsumerWidget {
   }
 }
 
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.label, required this.value});
-  final String label;
-  final String value;
+class _InfoCard extends StatelessWidget {
+  const _InfoCard({required this.rows});
+  final List<(String label, String value)> rows;
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final fg = Theme.of(context).textTheme.bodyMedium?.color;
+    final divider = Theme.of(context).dividerColor;
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: AppRadius.mdBr,
+        border: Border.all(color: AppElevation.ringSm(isDark)),
+        boxShadow: AppElevation.sm(isDark),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(fontSize: 12.5, color: fg?.withValues(alpha: 0.6)),
-          ),
-          Text(value, style: const TextStyle(fontSize: 13.5)),
-        ],
+      child: Column(
+        children: rows.asMap().entries.map((entry) {
+          final isLast = entry.key == rows.length - 1;
+          final (label, value) = entry.value;
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              border: isLast
+                  ? null
+                  : Border(bottom: BorderSide(color: divider)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: fg?.withValues(alpha: 0.6),
+                  ),
+                ),
+                Text(value, style: const TextStyle(fontSize: 13.5)),
+              ],
+            ),
+          );
+        }).toList(),
       ),
     );
   }
@@ -163,8 +198,13 @@ class _LanguageSegment extends StatelessWidget {
       ('en', l10n.languageEnglish),
     ];
 
+    final onAccent = Theme.of(context).colorScheme.onPrimary;
     return Container(
-      decoration: BoxDecoration(border: Border.all(color: divider)),
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        border: Border.all(color: divider),
+        borderRadius: AppRadius.mdBr,
+      ),
       child: Row(
         children: options.asMap().entries.map((entry) {
           final index = entry.key;
@@ -186,7 +226,7 @@ class _LanguageSegment extends StatelessWidget {
                   label,
                   style: TextStyle(
                     fontSize: 13,
-                    color: selected ? Colors.white : null,
+                    color: selected ? onAccent : null,
                   ),
                 ),
               ),

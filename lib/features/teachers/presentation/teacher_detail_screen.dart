@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/color_utils.dart';
 import '../../../core/utils/arabic_numerals.dart';
+import '../../../core/widgets/app_tag.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../application/teacher_providers.dart';
 import '../data/teacher_models.dart';
@@ -15,7 +17,9 @@ class TeacherDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final teacherAsync = ref.watch(teacherDetailProvider(teacherId));
+    final accent = Theme.of(context).colorScheme.primary;
     final fg = Theme.of(context).textTheme.bodyMedium?.color;
+    final divider = Theme.of(context).dividerColor;
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
@@ -31,10 +35,14 @@ class TeacherDetailScreen extends ConsumerWidget {
               children: [
                 CircleAvatar(
                   radius: 32,
-                  backgroundColor: AppColors.neutral300,
+                  backgroundColor: shadeColor(accent, 0.55),
                   child: Text(
                     teacher.name.isNotEmpty ? teacher.name[0] : '؟',
-                    style: AppTextStyles.brand(context, size: 24, color: fg),
+                    style: AppTextStyles.brand(
+                      context,
+                      size: 22,
+                      color: tintColor(accent, 0.90),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -49,16 +57,18 @@ class TeacherDetailScreen extends ConsumerWidget {
                       ),
                       if (teacher.subjects.isNotEmpty ||
                           teacher.educationStages.isNotEmpty) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          [
-                            ...teacher.subjects,
-                            ...teacher.educationStages,
-                          ].join(' · '),
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: fg?.withValues(alpha: 0.65),
-                          ),
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: [
+                            ...teacher.subjects.map(
+                              (s) => AppTag(s, variant: AppTagVariant.accent),
+                            ),
+                            ...teacher.educationStages.map(
+                              (s) => AppTag(s, variant: AppTagVariant.neutral),
+                            ),
+                          ],
                         ),
                       ],
                     ],
@@ -77,7 +87,31 @@ class TeacherDetailScreen extends ConsumerWidget {
                 ),
               ),
             ],
-            const SizedBox(height: 20),
+            if (teacher.email != null) ...[
+              const SizedBox(height: 16),
+              Divider(color: divider),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Icon(
+                    Icons.mail_outline,
+                    size: 16,
+                    color: fg?.withValues(alpha: 0.55),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    teacher.email!,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: fg?.withValues(alpha: 0.55),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 16),
+            Divider(color: divider),
+            const SizedBox(height: 16),
             Text(
               l10n.hisCourses,
               style: Theme.of(
@@ -100,10 +134,10 @@ class TeacherDetailScreen extends ConsumerWidget {
 }
 
 const _swatches = [
-  Color(0xFF7C1405),
-  Color(0xFF8B2E1F),
-  Color(0xFF605D5D),
-  Color(0xFF444141),
+  AppColors.accent500,
+  AppColors.accent700,
+  AppColors.neutral600,
+  AppColors.neutral800,
 ];
 
 class _TeacherCourseTile extends StatelessWidget {
@@ -112,44 +146,60 @@ class _TeacherCourseTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final color = _swatches[course.id % _swatches.length];
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Material(
-        color: Theme.of(context).cardTheme.color,
-        child: InkWell(
-          onTap: () => context.push('/courses/${course.id}'),
-          child: Padding(
-            padding: const EdgeInsets.all(10),
-            child: Row(
-              children: [
-                Container(width: 40, height: 40, color: color),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        course.title,
-                        style: const TextStyle(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Text(
-                        '${localizedDigits(context, course.price.toStringAsFixed(0))} '
-                        '${AppLocalizations.of(context)!.currencySuffix}',
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          color: Theme.of(
-                            context,
-                          ).textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
-                        ),
-                      ),
-                    ],
+      child: Container(
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: AppRadius.mdBr,
+          border: Border.all(color: AppElevation.ringSm(isDark)),
+          boxShadow: AppElevation.sm(isDark),
+        ),
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: () => context.push('/courses/${course.id}'),
+            child: Padding(
+              padding: const EdgeInsets.all(10),
+              child: Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: AppRadius.smBr,
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          course.title,
+                          style: const TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          '${localizedDigits(context, course.price.toStringAsFixed(0))} '
+                          '${AppLocalizations.of(context)!.currencySuffix}',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            color: Theme.of(context).textTheme.bodyMedium?.color
+                                ?.withValues(alpha: 0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

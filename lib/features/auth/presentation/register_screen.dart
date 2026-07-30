@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/labeled_field.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../application/auth_controller.dart';
@@ -90,6 +91,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Colors.red.withValues(alpha: 0.08),
+                      borderRadius: AppRadius.mdBr,
                       border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
                     ),
                     child: Text(
@@ -287,9 +289,14 @@ class _StageSegment extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final divider = Theme.of(context).dividerColor;
+    final onAccent = Theme.of(context).colorScheme.onPrimary;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return Container(
-      decoration: BoxDecoration(border: Border.all(color: divider)),
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        border: Border.all(color: divider),
+        borderRadius: AppRadius.mdBr,
+      ),
       child: Row(
         children: educationStages.asMap().entries.map((entry) {
           final index = entry.key;
@@ -313,7 +320,7 @@ class _StageSegment extends StatelessWidget {
                   label,
                   style: TextStyle(
                     fontSize: 13,
-                    color: selected ? Colors.white : null,
+                    color: selected ? onAccent : null,
                   ),
                 ),
               ),
@@ -326,9 +333,8 @@ class _StageSegment extends StatelessWidget {
 }
 
 /// Matches the `.radio` component — a custom dot rather than the platform
-/// radio button, so it stays square-cornered-consistent with the rest of the
-/// system (the dot itself is the one deliberately circular exception, same
-/// as the mockup).
+/// radio button, so the selected state (filled accent dot with an inset
+/// bg-colored center) matches the mockup exactly.
 class _GenderRadio extends StatelessWidget {
   const _GenderRadio({
     required this.label,
